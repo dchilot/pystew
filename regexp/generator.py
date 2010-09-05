@@ -86,7 +86,7 @@ class Char:
     OTHER_WORD = 'OTHER_WORD'
     NONE = 'NONE'
 
-    def __init__(self, char, type = "strict"):
+    def __init__(self, char, regexp_type = "strict"):
         from sre_parse import DIGITS, SPECIAL_CHARS, CATEGORY_DIGIT
         from sre_parse import WHITESPACE, CATEGORY_SPACE
         def _getCategory(char):
@@ -108,7 +108,7 @@ class Char:
             else:
                 return Char.UNKNOWN
 
-        self._type = type
+        self._regexp_type = regexp_type
         self._category = _getCategory(char)
         self._char = char
         logging.debug("char = " + str(char))
@@ -233,7 +233,7 @@ class BaseSequence(object):
         """A leaf is a sequence that does not have sub-sequences."""
         return True
 
-    def getString(self, type = "strict"):
+    def getString(self, regexp_type = "strict"):
         """String representation of a sequence used to generate the regular 
         expression."""
         return ""
@@ -386,20 +386,20 @@ class Sequence(BaseSequence):
                 self._max = max(self._max, sequence._max)
         return appended
 
-    def getString(self, type = "strict"):
-        """The result depends on `type`.
-        If `type` is "strict" the representation will be the exact interval
-        (@TODO ? except if the whole class is covered for \d and \s).
-        If `type` is "lax" the representation of the class will be used for 
-                some characters :
-                    - digit -> \d
-                    - letter or '_' -> \w
-                    - space -> \s        
+    def getString(self, regexp_type = "strict"):
+        """The result depends on `regexp_type`.
+        If `regexp_type` is "strict" the representation will be the exact 
+        interval(@TODO ? except if the whole class is covered for \d and \s).
+        If `regexp_type` is "lax" the representation of the class will be used
+        for some characters :
+            - digit -> \d
+            - letter or '_' -> \w
+            - space -> \s        
         If the sequence is not contained and more than one character or 
         different from a class is returned brakets will be added unless the 
         sequence is part of a bigger interval."""
         use_brackets = False
-        if (("lax" == type) and (self._max != self._min) and 
+        if (("lax" == regexp_type) and (self._max != self._min) and 
             (self.getCategory() in CATEGORY_HAVE_CLASS)):
             if (self.getCategory() == DIGITS.getCategory()):
                 string = "\d"
@@ -556,13 +556,13 @@ class MultiSequence(BaseSequence):
             for sequence in old_sequences[key]:
                 self.appendSequence(sequence)
 
-    def getString(self, type = "strict"):
+    def getString(self, regexp_type = "strict"):
         """This has only been implemented with OR kind in mind.
-        The result depends on `type`.
-        If `type` is "strict" the representation will be the exact interval
-        (@TODO ? except if the whole class is covered for \d and \s).
-        If `type` is "lax" the representation of the class will be used for 
-        some characters :
+        The result depends on `regexp_type`.
+        If `regexp_type` is "strict" the representation will be the exact 
+        interval(@TODO ? except if the whole class is covered for \d and \s).
+        If `regexp_type` is "lax" the representation of the class will be used 
+        for some characters :
             - digit -> \d
             - letter or '_' -> \w
             - space -> \s
@@ -588,7 +588,7 @@ class MultiSequence(BaseSequence):
                 processed = False
                 if (((len(self._sequences[key]) > 1) or 
                     (self._sequences[key][0].getLength() > 1)) and 
-                    ("lax" == type)):
+                    ("lax" == regexp_type)):
                     if (key == DIGITS.getCategory()):
                         processed = True
                         add_digits_class = True
@@ -602,30 +602,30 @@ class MultiSequence(BaseSequence):
                     for sequence in self._sequences[key]:
                         if (key == DIGITS.getCategory()):
                             added_digits += 1
-                            digits += sequence.getString(type)
+                            digits += sequence.getString(regexp_type)
                         elif (key in CATEGORY_WORDS):
                             added_words += 1
-                            words += sequence.getString(type)
+                            words += sequence.getString(regexp_type)
                         elif (key == SPACES.getCategory()):
                             added_spaces += 1
-                            spaces += sequence.getString(type)
+                            spaces += sequence.getString(regexp_type)
                         else:
                             added_others += 1
-                            others += sequence.getString(type)
+                            others += sequence.getString(regexp_type)
         added_count = 0
-        if (("lax" == type) and (add_digits_class)):
+        if (("lax" == regexp_type) and (add_digits_class)):
             added_count += 1
             string += "\d"
         else:
             added_count += added_digits
             string += digits
-        if (("lax" == type) and (add_words_class)):
+        if (("lax" == regexp_type) and (add_words_class)):
             added_count += 1
             string += "\w"
         else:
             added_count += added_words
             string += words
-        if (("lax" == type) and (add_spaces_class)):
+        if (("lax" == regexp_type) and (add_spaces_class)):
             added_count += 1
             string += "\s"
         else:
@@ -654,13 +654,14 @@ class MultiSequence(BaseSequence):
 
 class SequenceFactory(object):
     """Factory to create sequences."""
-    def __init__(self, type = "strict"):
-        logging.debug("Created an object of type '%s'", "SequenceFactory")
-        self._type = type
+    def __init__(self, regexp_type = "strict"):
+        logging.debug("Created an object of regexp_type '%s'", 
+            "SequenceFactory")
+        self._regexp_type = regexp_type
 
     def createSequence(self, char):
         """Creates a sequence containing the character `char`."""
-        return Sequence(Char(char, self._type))
+        return Sequence(Char(char, self._regexp_type))
 
     def addSequences(self, left, right):
         """Try to append `right` to `left`. If it fails than create a new 
@@ -681,15 +682,15 @@ class Node:
     (for now). It is responsible for building the appropriate sequences using 
     a `SequenceFactory`.
     """
-    def __init__(self, characters, iType):
+    def __init__(self, characters, regexp_type):
         """characters : the characters the node will have to match.
-        iType : ("strict" | "lax")"""
+        regexp_type : ("strict" | "lax")"""
         self._len = len(characters)
         self._range = characters
         characters = list(set(characters))
         characters.sort()
         if ((len(self._range) > 1) and (len(characters) == 1)):
-            iType = "strict"
+            regexp_type = "strict"
         logging.debug('characters = ' + str(characters))
         self._root_sequence = None
         factory = SequenceFactory("strict")
@@ -719,12 +720,12 @@ class Node:
         Returns the number of characters provided to the constructor."""
         return self._len
 
-    def getString(self, type = "strict"):
+    def getString(self, regexp_type = "strict"):
         """Returns the mini regular expression coding for this character 
         without considering the possibility that it is optional."""
-        return self._root_sequence.getString(type)
+        return self._root_sequence.getString(regexp_type)
 
-def generate(sample_strings, iType = "lax"):
+def generate(sample_strings, regexp_type = "lax"):
     """`sample_strings`: list of strings for which to generate a matching 
     regexp. It does not need to be ordered.
     Returns a regular expression that matches the sample strings. The 
@@ -771,15 +772,17 @@ def generate(sample_strings, iType = "lax"):
     # the job of this not too self explanatory loop is to group consecutive 
     # nodes that match exaclty the same characters.
     for node in nodes:
-        logging.debug("node.getString(iType) = %s", node.getString(iType))
+        logging.debug("node.getString(regexp_type) = %s", 
+            node.getString(regexp_type))
         logging.debug("node.getLength() = %i", node.getLength())        
         if (None != ref_node):
-            if (ref_node.getString(iType) == node.getString(iType)):
+            if (ref_node.getString(regexp_type) == 
+                node.getString(regexp_type)):
                 if (not node.getIsOptional()):
                     left += 1
                 count += 1
             else:
-                result += ref_node.getString(iType)
+                result += ref_node.getString(regexp_type)
                 if (count > 1):
                     if ((left == count)):
                         logging.debug("{%i}", count)
@@ -791,8 +794,8 @@ def generate(sample_strings, iType = "lax"):
                     result += "?"
                 ref_node = node
                 logging.debug("next ref_node")
-                logging.debug("ref_node.getString(iType) = %s", 
-                    ref_node.getString(iType))
+                logging.debug("ref_node.getString(regexp_type) = %s", 
+                    ref_node.getString(regexp_type))
                 logging.debug("ref_node.getLength() = %i", 
                     ref_node.getLength())
                 count = 1
@@ -808,11 +811,11 @@ def generate(sample_strings, iType = "lax"):
                 left = 0
             else:
                 left = 1
-            logging.debug("ref_node.getString(iType) = %s", 
-                ref_node.getString(iType))
+            logging.debug("ref_node.getString(regexp_type) = %s", 
+                ref_node.getString(regexp_type))
             logging.debug("ref_node.getLength() = %i", ref_node.getLength())
     if (None != ref_node):
-        result += ref_node.getString(iType)
+        result += ref_node.getString(regexp_type)
         if (count > 1):
             if ((left == count)):
                 logging.debug("{%i}", count)
@@ -853,12 +856,12 @@ def checkEqual(expected, gotten):
     else:
         logging.info("OK")
 
-def test_generate(data, type, expected = None):
+def test_generate(data, regexp_type, expected = None):
     """`data`: list of strings used to generate the regular expression.
-    `type`: "strict" | "lax"
+    `regexp_type`: "strict" | "lax"
     `expected`: if provided, string containing the expected regular expression.
     """
-    exp = generate(data, type)
+    exp = generate(data, regexp_type)
     logging.info(str(data) +  " -> " + exp)
     if (None != expected):
         checkEqual(expected, exp)
