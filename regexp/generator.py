@@ -36,11 +36,14 @@ logging.basicConfig(
     filename='regexp.log',
     filemode='w')
 
-console = logging.StreamHandler(sys.stdout)
-console.setLevel(logging.INFO)
-logging.getLogger('').addHandler(console)
+_CONSOLE = logging.StreamHandler(sys.stdout)
+_CONSOLE.setLevel(logging.INFO)
+logging.getLogger('').addHandler(_CONSOLE)
 
-def escapeChar(char):
+def escape_char(char):
+    """`char`: character to escape if needed.
+    Returns a character so that it can be inserted in a regular expression, 
+    escaping it if needed."""
     import sre_parse
     if (None == char):
         return ''
@@ -50,32 +53,32 @@ def escapeChar(char):
 
 class Char:
     """
-    >>> Char('a').getCategory()
+    >>> Char('a').get_category()
     'LOWER_CASE_LETTER'
-    >>> Char('G').getCategory()
+    >>> Char('G').get_category()
     'UPPER_CASE_LETTER'
-    >>> Char(' ').getCategory()
+    >>> Char(' ').get_category()
     'category_space'
-    >>> Char('\\t').getCategory()
+    >>> Char('\\t').get_category()
     'category_space'
-    >>> Char('?').getCategory()
+    >>> Char('?').get_category()
     'SPECIAL'
-    >>> Char('_').getCategory()
+    >>> Char('_').get_category()
     'OTHER_WORD'
-    >>> Char(None).getCategory()
+    >>> Char(None).get_category()
     'NONE'
-    >>> (Char('4').getCategory() == Char('7').getCategory())
+    >>> (Char('4').get_category() == Char('7').get_category())
     True
-    >>> (Char('A').getCategory() == Char('G').getCategory())
+    >>> (Char('A').get_category() == Char('G').get_category())
     True
-    >>> (Char('f').getCategory() == Char('i').getCategory())
+    >>> (Char('f').get_category() == Char('i').get_category())
     True
-    >>> (Char('+').getCategory() == Char('?').getCategory())
+    >>> (Char('+').get_category() == Char('?').get_category())
     True
-    >>> (Char('-').getCategory() == Char('~').getCategory())
+    >>> (Char('-').get_category() == Char('~').get_category())
     True
     >>> # '_' is in its own category ('OTHER_WORD')
-    >>> (Char('_').getCategory() != Char('\').getCategory())
+    >>> (Char('_').get_category() != Char('\').get_category())
     True
     """
 
@@ -87,50 +90,57 @@ class Char:
     NONE = 'NONE'
 
     def __init__(self, char, regexp_type = "strict"):
-        from sre_parse import DIGITS, SPECIAL_CHARS, CATEGORY_DIGIT
+        import sre_parse
+        from sre_parse import SPECIAL_CHARS, CATEGORY_DIGIT
         from sre_parse import WHITESPACE, CATEGORY_SPACE
-        def _getCategory(char):
-            if (None == char):
-                return Char.NONE
-            elif ('_' == char):
-                return Char.OTHER_WORD
-            elif (char in DIGITS):
-                return CATEGORY_DIGIT
-            elif (char in SPECIAL_CHARS):
-                return Char.SPECIAL
-            elif (char in WHITESPACE):
-                return CATEGORY_SPACE
-            elif (char.isalpha()):
-                if (char.islower()):
-                    return Char.LOWER_CASE_LETTER
-                else:
-                    return Char.UPPER_CASE_LETTER
-            else:
-                return Char.UNKNOWN
 
         self._regexp_type = regexp_type
-        self._category = _getCategory(char)
+
+        if (None == char):
+            self._category = Char.NONE
+        elif ('_' == char):
+            self._category = Char.OTHER_WORD
+        elif (char in sre_parse.DIGITS):
+            self._category = CATEGORY_DIGIT
+        elif (char in SPECIAL_CHARS):
+            self._category = Char.SPECIAL
+        elif (char in WHITESPACE):
+            self._category = CATEGORY_SPACE
+        elif (char.isalpha()):
+            if (char.islower()):
+                self._category = Char.LOWER_CASE_LETTER
+            else:
+                self._category = Char.UPPER_CASE_LETTER
+        else:
+            self._category = Char.UNKNOWN
         self._char = char
         logging.debug("char = " + str(char))
         logging.debug("self._category = " + self._category)
 
-    def getAllCategories():
-        from sre_parse import DIGITS, SPECIAL_CHARS, CATEGORY_DIGIT
-        from sre_parse import WHITESPACE, CATEGORY_SPACE
-        return [CATEGORY_DIGIT, SPECIAL, CATEGORY_SPACE, 
+    def get_all_categories():
+        """Returns all the possible categories for a character."""
+        from sre_parse import CATEGORY_DIGIT
+        from sre_parse import CATEGORY_SPACE
+        return [CATEGORY_DIGIT, Char.SPECIAL, CATEGORY_SPACE, 
             Char.LOWER_CASE_LETTER, Char.UPPER_CASE_LETTER, 
             Char.UNKNOWN]
 
-    def getCategory(self):
+    def get_category(self):
+        """Returns the category of this character."""
         return self._category
 
-    def getChar(self):
+    def get_char(self):
+        """Returns the wrapped character."""
         return self._char
 
-    def getString(self):
-        return escapeChar(self._char)
+    def get_string(self):
+        """Returns a representation of the character that can be includede in 
+        a regular expression."""
+        return escape_char(self._char)
 
-    def getIsOrdered(self):
+    def get_is_ordered(self):
+        """Returns True if and only if the character is a digit or a letter
+        (which are ordered)."""
         from sre_parse import CATEGORY_DIGIT
         return (self._category in [CATEGORY_DIGIT, 
             Char.LOWER_CASE_LETTER, Char.UPPER_CASE_LETTER])
@@ -138,22 +148,22 @@ class Char:
     def __eq__(self, other_char):
         if (None == other_char):
             return False
-        return (self._char == other_char._char)
+        return (self._char == other_char.get_char())
 
     def __ne__(self, other_char):
         if (None == other_char):
             return True
-        return (self._char != other_char._char)
+        return (self._char != other_char.get_char())
 
     def __lt__(self, other_char):
         if (None == other_char):
             return True
-        return (self._char < other_char._char)
+        return (self._char < other_char.get_char())
 
     def __gt__(self, other_char):
         if (None == other_char):
             return False
-        return (self._char > other_char._char)
+        return (self._char > other_char.get_char())
 
 # constants
 DIGITS = Char('0')
@@ -173,26 +183,26 @@ SPECIALS = Char('?')
 """Sample for characters that need to be escaped because they have a special 
 meaning category."""
 #EMPTY = Char(None)
-"""
-Wrapper to apply fonction #getCategory on the object passed in parameter.
-"""
-def getCategory(value):
-    return value.getCategory()
+
+def get_category(value):
+    """Wrapper to apply fonction #get_category on the object passed in 
+    parameter."""
+    return value.get_category()
 WORDS = [DIGITS, LOWER_CASE_LETTERS, UPPER_CASE_LETTERS, OTHER_WORDS]
-CATEGORY_WORDS = map(getCategory, WORDS)
-CATEGORY_HAVE_CLASS =  map(getCategory, WORDS + [SPACES])
+CATEGORY_WORDS = map(get_category, WORDS)
+CATEGORY_HAVE_CLASS =  map(get_category, WORDS + [SPACES])
 
 """
->>> DIGITS.getCategory() in CATEGORY_HAVE_CLASS
+>>> DIGITS.get_category() in CATEGORY_HAVE_CLASS
 True
->>> LOWER_CASE_LETTERS.getCategory() in CATEGORY_HAVE_CLASS
+>>> LOWER_CASE_LETTERS.get_category() in CATEGORY_HAVE_CLASS
 True
->>> UPPER_CASE_LETTERS.getCategory() in CATEGORY_HAVE_CLASS
+>>> UPPER_CASE_LETTERS.get_category() in CATEGORY_HAVE_CLASS
 True
->>> OTHER_WORDS.getCategory() in CATEGORY_HAVE_CLASS
+>>> OTHER_WORDS.get_category() in CATEGORY_HAVE_CLASS
 True
 >>> for char in [SPACES, OTHERS, SPECIALS]:
->>>     char.getCategory() in CATEGORY_HAVE_CLASS
+>>>     char.get_category() in CATEGORY_HAVE_CLASS
 True
 True
 True
@@ -225,32 +235,32 @@ class BaseSequence(object):
         self._force_parenthesis = False
         self._optional = False
 
-    def setContained(self):
+    def set_contained(self):
         """A sequence is contained if it is part of an interval ("[...]")."""
         self._contained = True
 
-    def isLeaf(self):
+    def is_leaf(self):
         """A leaf is a sequence that does not have sub-sequences."""
         return True
 
-    def getString(self, regexp_type = "strict"):
+    def get_string(self, regexp_type = "strict"):
         """String representation of a sequence used to generate the regular 
         expression."""
         return ""
 
     def linearise(self):
         """Experimental fun."""
-        return [self.getString()]
+        return [self.get_string()]
 
     def merge(self):
         """Order the stored elements in the sequence."""
         logging.debug("Do nothing to merge this kind of sequence.")
 
-    def setOptional(self):
+    def set_optional(self):
         """A sequence is optional if the cardinality can be 0."""
         self._optional = True
 
-    def getIsOptional(self):
+    def get_is_optional(self):
         """Return True if and only if the sequence is optional."""
         return self._optional
 
@@ -268,17 +278,17 @@ class Sequence(BaseSequence):
         """The character that has the lowest integer representation."""
         self._max = None
         """The character that has the highest integer representation."""
-        self.appendChar(char)
+        self.append_char(char)
 
-    def isLeaf(self):
+    def is_leaf(self):
         """This kind of sequence is always a leaf."""
         return True
 
-    def getLength(self):
+    def get_length(self):
         """Length of the interval covered by this sequence."""
-        return (ord(self._max.getChar()) - ord(self._min.getChar()))
+        return (ord(self._max.get_char()) - ord(self._min.get_char()))
 
-    def appendChar(self, char):
+    def append_char(self, char):
         """`char`: must be of type `Char`.
         Try to add a `char` to this sequence. It will fail if the resulting 
         list of characters would not be an interval anymore or if the 
@@ -286,25 +296,25 @@ class Sequence(BaseSequence):
         be added more than once.
         Returns True if and only if the character has been added.
         >>> seq = Sequence(Char("t"))
-        >>> seq.appendChar(Char("v"))
+        >>> seq.append_char(Char("v"))
         False
-        >>> seq.appendChar(Char("u"))
+        >>> seq.append_char(Char("u"))
         True
-        >>> seq.appendChar(Char("v"))
+        >>> seq.append_char(Char("v"))
         True
-        >>> seq.appendChar(Char("b"))
+        >>> seq.append_char(Char("b"))
         False
-        >>> seq.appendChar(Char("u"))
+        >>> seq.append_char(Char("u"))
         True
         """
         appended = False
         if (None != self._min):
-            if ((self._min.getCategory() == char.getCategory()) and
-                ((ord(self._min.getChar()) - 2 < ord(char.getChar())) and 
-                (ord(char.getChar()) < ord(self._max.getChar()) + 2))):
-                if (self._min.getChar() > char.getChar()):
+            if ((self._min.get_category() == char.get_category()) and
+                ((ord(self._min.get_char()) - 2 < ord(char.get_char())) and 
+                (ord(char.get_char()) < ord(self._max.get_char()) + 2))):
+                if (self._min.get_char() > char.get_char()):
                     self._min = char
-                if (self._max.getChar() < char.getChar()):
+                if (self._max.get_char() < char.get_char()):
                     self._max = char
                 self._chars.append(char)
                 appended = True
@@ -315,70 +325,69 @@ class Sequence(BaseSequence):
             appended = True
         return appended
 
-    def getCategory(self):
+    def get_category(self):
+        """The category of the sequence is the category of all the characters.
+        >>> Sequence(Char("1")).get_category() == DIGITS.get_category()
+        True
+        >>> Sequence(Char("t")).get_category() == \
+                LOWER_CASE_LETTERS.get_category()
+        True
+        >>> Sequence(Char("D")).get_category() == \
+                UPPER_CASE_LETTERS.get_category()
+        True
+        >>> Sequence(Char("_")).get_category() == OTHER_WORDS.get_category()
+        True
+        >>> Sequence(Char("?")).get_category() == SPECIALS.get_category()
+        True
+        >>> Sequence(Char("-")).get_category() == OTHERS.get_category()
+        True
         """
-        The category of the sequence is the category of all the characters.
-        >>> Sequence(Char("1")).getCategory() == DIGITS.getCategory()
-        True
-        >>> Sequence(Char("t")).getCategory() == \
-                LOWER_CASE_LETTERS.getCategory()
-        True
-        >>> Sequence(Char("D")).getCategory() == \
-                UPPER_CASE_LETTERS.getCategory()
-        True
-        >>> Sequence(Char("_")).getCategory() == OTHER_WORDS.getCategory()
-        True
-        >>> Sequence(Char("?")).getCategory() == SPECIALS.getCategory()
-        True
-        >>> Sequence(Char("-")).getCategory() == OTHERS.getCategory()
-        True
-        """
-        return self._min.getCategory()
+        return self._min.get_category()
 
-    def appendSequence(self, sequence):
+    def append_sequence(self, sequence):
         """Try to append all the characters of an other sequence to this one.
         The two sequences have to be of the same category and the resulting 
         character list must make an interval.
         Returns True if and only if the sequence has been added.
         >>> left = Sequence(Char("g"))
-        >>> left.appendChar(Char("h"))
+        >>> left.append_char(Char("h"))
         True
-        >>> left.appendChar(Char("i"))
+        >>> left.append_char(Char("i"))
         True
-        >>> left.appendChar(Char("j"))
+        >>> left.append_char(Char("j"))
         True
         >>> right = Sequence(Char("e"))
-        >>> right.appendChar(Char("d"))
+        >>> right.append_char(Char("d"))
         True
-        >>> left.appendSequence(right)
+        >>> left.append_sequence(right)
         False
-        >>> right.appendChar(Char("f"))
+        >>> right.append_char(Char("f"))
         True
-        >>> left.appendSequence(right)
+        >>> left.append_sequence(right)
         True
         """
         appended = False
 
 #        logging.debug("check if min -1 %s == other_max %s", 
-#            ord(self._min.getChar()) - 1, ord(sequence._max.getChar()))
+#            ord(self._min.get_char()) - 1, ord(sequence._max.get_char()))
 #        logging.debug("check if other_min -1 %s == max %s", 
-#            ord(sequence._min.getChar()) - 1, ord(self._max.getChar()))
+#            ord(sequence._min.get_char()) - 1, ord(self._max.get_char()))
 #        logging.debug("check if other_min %s is in [min_max] %s", 
-#            sequence._min.getChar(), range(ord(self._min.getChar()), 
-#                ord(self._max.getChar())))
+#            sequence._min.get_char(), range(ord(self._min.get_char()), 
+#                ord(self._max.get_char())))
 #        logging.debug("check if other_max %s is in [min_max] %s", 
-#            sequence._max.getChar(), range(ord(self._min.getChar()), 
-#                ord(self._max.getChar())))
+#            sequence._max.get_char(), range(ord(self._min.get_char()), 
+#                ord(self._max.get_char())))
         # check if the intervals are not disjoint
-        if (sequence.getCategory() == self.getCategory()):
-            if ((ord(self._min.getChar()) - 1 == 
-                    ord(sequence._max.getChar())) or 
-                (ord(sequence._min.getChar()) - 1 == 
-                    ord(self._max.getChar())) or
-                (ord(sequence._min.getChar()) in range(
-                    ord(self._min.getChar()), ord(self._max.getChar()))) or
-                (ord(sequence._max.getChar()) in range(
-                    ord(self._min.getChar()), ord(self._max.getChar())))):
+        if (sequence.get_category() == self.get_category()):
+            if ((ord(self._min.get_char()) - 1 == 
+                    ord(sequence._max.get_char())) or 
+                (ord(sequence._min.get_char()) - 1 == 
+                    ord(self._max.get_char())) or
+                (ord(sequence._min.get_char()) in range(
+                    ord(self._min.get_char()), ord(self._max.get_char()))) or
+                (ord(sequence._max.get_char()) in range(
+                    ord(self._min.get_char()), ord(self._max.get_char())))):
                 appended = True
                 for char in sequence._chars:
                     self._chars.append(char)
@@ -386,7 +395,7 @@ class Sequence(BaseSequence):
                 self._max = max(self._max, sequence._max)
         return appended
 
-    def getString(self, regexp_type = "strict"):
+    def get_string(self, regexp_type = "strict"):
         """The result depends on `regexp_type`.
         If `regexp_type` is "strict" the representation will be the exact 
         interval(@TODO ? except if the whole class is covered for \d and \s).
@@ -400,63 +409,62 @@ class Sequence(BaseSequence):
         sequence is part of a bigger interval."""
         use_brackets = False
         if (("lax" == regexp_type) and (self._max != self._min) and 
-            (self.getCategory() in CATEGORY_HAVE_CLASS)):
-            if (self.getCategory() == DIGITS.getCategory()):
+            (self.get_category() in CATEGORY_HAVE_CLASS)):
+            if (self.get_category() == DIGITS.get_category()):
                 string = "\d"
-            elif (self.getCategory() in CATEGORY_WORDS):
+            elif (self.get_category() in CATEGORY_WORDS):
                 string = "\w"
-            elif (self.getCategory() == SPACES.getCategory()):
+            elif (self.get_category() == SPACES.get_category()):
                 string = "\s"
             else:
-                raise Exception("Unexpected category: " + self.getCategory())
+                raise Exception("Unexpected category: " + self.get_category())
         else:
             if (self._max == self._min):
-                string = self._max.getString()
-            elif (ord(self._max.getChar()) - ord(self._min.getChar()) > 1):
-                string = self._min.getString() + "-" + self._max.getString()
+                string = self._max.get_string()
+            elif (ord(self._max.get_char()) - ord(self._min.get_char()) > 1):
+                string = self._min.get_string() + "-" + self._max.get_string()
                 use_brackets = True
             else:
-                string = self._min.getString() + self._max.getString()
+                string = self._min.get_string() + self._max.get_string()
                 use_brackets = True
         if ((not self._contained) and (use_brackets)):
             string = "[" + string + "]"
         return string
 
     def linearise(self):
-        use_brackets = False
         if (self._max == self._min):
-            list = [self._max.getString()]
-        elif (ord(self._max.getChar()) - ord(self._min.getChar()) > 1):
-            list = [self._min.getString() + "-" + self._max.getString()]
+            lin = [self._max.get_string()]
+        elif (ord(self._max.get_char()) - ord(self._min.get_char()) > 1):
+            lin = [self._min.get_string() + "-" + self._max.get_string()]
         else:
-            list = [self._min.getString() + self._max.getString()]
-        return list
+            lin = [self._min.get_string() + self._max.get_string()]
+        return lin
 
-    def getIsInterval(self):
+    def get_is_interval(self):
         """A single character can not be called an interval.
         Returns True if and only if this sequence contains more than on 
         characters (not considering duplicates).
         >>> seq = Sequence(Char("g"))
-        >>> seq.getIsInterval()
+        >>> seq.get_is_interval()
         False
-        >>> seq.appendChar(Char("h"))
+        >>> seq.append_char(Char("h"))
         True
-        >>> seq.getIsInterval()
+        >>> seq.get_is_interval()
         True
-        >>> seq.appendChar(Char("i"))
+        >>> seq.append_char(Char("i"))
         True
-        >>> seq.getIsInterval()
+        >>> seq.get_is_interval()
         True
         >>> seq = Sequence(Char("5"))
-        >>> seq.getIsInterval()
+        >>> seq.get_is_interval()
         False
-        >>> seq.appendChar(Char("5"))
+        >>> seq.append_char(Char("5"))
         True
-        >>> seq.getIsInterval()
+        >>> seq.get_is_interval()
         False
-        >>> seq.appendChar(Char("4"))
+        >>> seq.append_char(Char("4"))
         True
-        >>> seq.getIsInterval()
+        >>> seq.get_is_interval()
         True
         """
         return (self._max != self._min)
@@ -477,25 +485,27 @@ class MultiSequence(BaseSequence):
         BaseSequence.__init__(self)
         logging.debug("Created an object of type '%s'", "MultiSequence")
         self._kind = kind
-        self.__subInit()
+        self._sequences = {}
+        self.__sub_init()
     
-    def __subInit(self):
+    def __sub_init(self):
+        """Prepares the content of `_sequences`."""
         self._sequences = {}
         if (MultiSequence.OR == self._kind):
-            self._sequences[DIGITS.getCategory()] = []
-            self._sequences[LOWER_CASE_LETTERS.getCategory()] = []
-            self._sequences[UPPER_CASE_LETTERS.getCategory()] = []
-            self._sequences[OTHER_WORDS.getCategory()] = []
-            self._sequences[SPACES.getCategory()] = []
-            self._sequences[SPECIALS.getCategory()] = []
-            self._sequences[OTHERS.getCategory()] = []
+            self._sequences[DIGITS.get_category()] = []
+            self._sequences[LOWER_CASE_LETTERS.get_category()] = []
+            self._sequences[UPPER_CASE_LETTERS.get_category()] = []
+            self._sequences[OTHER_WORDS.get_category()] = []
+            self._sequences[SPACES.get_category()] = []
+            self._sequences[SPECIALS.get_category()] = []
+            self._sequences[OTHERS.get_category()] = []
 
-    def isLeaf(self):
+    def is_leaf(self):
         """Returns False as the purpose of a MultiSequence is to contain other 
         sequences."""
         return False
 
-    def getCategory(self):
+    def get_category(self):
         """tentative ... not sure what it should return for `OR` kind."""
         if (MultiSequence.OR == self._kind):
             return None
@@ -507,25 +517,25 @@ class MultiSequence(BaseSequence):
         else:
             raise Exception("Forbidden kind of sequence: '" + self._kind + "'")
 
-    def appendSequence(self, sequence):
+    def append_sequence(self, sequence):
         """Appending a sequence can only fail in case the one it is added to 
         is of kind AND and both sequences are of different categories.
         There is no guarantee that a sub-sequence will be inserted at an 
         optimal place as it is only appended. To order the sub-sequences you
         need to call `merge`.
         Returns True if and only if the sequence has been added."""
-#        if (EMPTY.getCategory() == sequence.getCategory()):
+#        if (EMPTY.get_category() == sequence.get_category()):
 #            logging.error("We should not be here!")
 #            self._optional = True
 #            return False
         appended = False
         if (MultiSequence.OR == self._kind):
-            if (sequence.isLeaf()):
+            if (sequence.is_leaf()):
                 # you can only put leaves inside
-                sequences = self._sequences[sequence.getCategory()]
+                sequences = self._sequences[sequence.get_category()]
                 if (len(sequences) > 0):
                     for pivot in sequences:
-                        if (pivot.appendSequence(sequence)):
+                        if (pivot.append_sequence(sequence)):
                             appended = True
                             break
                     if (not appended):
@@ -535,28 +545,28 @@ class MultiSequence(BaseSequence):
                     sequences.append(sequence)
                     appended = True
         else:
-            if (sequence.isLeaf()):
+            if (sequence.is_leaf()):
                 if (len(self._sequences.keys()) == 0):
-                    self._sequences.append(sequence)
+                    self._sequences[sequence.get_category()] = []
+                    self._sequences[sequence.get_category()].append(sequence)
                 else:
-                    if (self._sequences.has_key(sequence.getCategory()) and
-                        self.sequences[sequence.getCategory()].\
-                            appendSequence(sequence)):
+                    if (self._sequences.has_key(sequence.get_category())):
                         # when 'AND' only put together sequences of the same 
                         # category
-                        appended = True
+                        for pivot in self._sequences[sequence.get_category()]:
+                            appended |= pivot.append_sequence(sequence)
         return appended
 
     def merge(self):
         """Not optimal way to try to merge the sub-sequences in case the gaps 
         between them have been filled (or more)."""
         old_sequences = self._sequences
-        self.__subInit()
+        self.__sub_init()
         for key in old_sequences.keys():
             for sequence in old_sequences[key]:
-                self.appendSequence(sequence)
+                self.append_sequence(sequence)
 
-    def getString(self, regexp_type = "strict"):
+    def get_string(self, regexp_type = "strict"):
         """This has only been implemented with OR kind in mind.
         The result depends on `regexp_type`.
         If `regexp_type` is "strict" the representation will be the exact 
@@ -570,8 +580,7 @@ class MultiSequence(BaseSequence):
         brakets will be added unless the sequence is part of a bigger 
         interval."""
         string = ""
-        added_sequence = False
-        logging.debug("Sequence.getString() [lax]")
+        logging.debug("Sequence.get_string() [lax]")
         add_digits_class = False
         add_words_class = False
         add_spaces_class = False
@@ -587,31 +596,31 @@ class MultiSequence(BaseSequence):
             if (len(self._sequences[key]) > 0):
                 processed = False
                 if (((len(self._sequences[key]) > 1) or 
-                    (self._sequences[key][0].getLength() > 1)) and 
+                    (self._sequences[key][0].get_length() > 1)) and 
                     ("lax" == regexp_type)):
-                    if (key == DIGITS.getCategory()):
+                    if (key == DIGITS.get_category()):
                         processed = True
                         add_digits_class = True
                     elif (key in CATEGORY_WORDS):
                         processed = True
                         add_words_class = True
-                    elif (key == SPACES.getCategory()):
+                    elif (key == SPACES.get_category()):
                         processed = True
                         add_spaces_class = True
                 if (not processed):
                     for sequence in self._sequences[key]:
-                        if (key == DIGITS.getCategory()):
+                        if (key == DIGITS.get_category()):
                             added_digits += 1
-                            digits += sequence.getString(regexp_type)
+                            digits += sequence.get_string(regexp_type)
                         elif (key in CATEGORY_WORDS):
                             added_words += 1
-                            words += sequence.getString(regexp_type)
-                        elif (key == SPACES.getCategory()):
+                            words += sequence.get_string(regexp_type)
+                        elif (key == SPACES.get_category()):
                             added_spaces += 1
-                            spaces += sequence.getString(regexp_type)
+                            spaces += sequence.get_string(regexp_type)
                         else:
                             added_others += 1
-                            others += sequence.getString(regexp_type)
+                            others += sequence.get_string(regexp_type)
         added_count = 0
         if (("lax" == regexp_type) and (add_digits_class)):
             added_count += 1
@@ -638,19 +647,16 @@ class MultiSequence(BaseSequence):
         return string
 
     def linearise(self):
-        list = []
-        added_sequence = False
-        use_parenthesis = False
+        lin = []
         for key in self._sequences.keys():
             sub_list = []
             added = False
-            use_brackets = False
             for sequence in self._sequences[key]:
                 sub_list.append(sequence.linearise())
                 added = True 
             if (added):
-                list.append(sub_list)
-        return list
+                lin.append(sub_list)
+        return lin
 
 class SequenceFactory(object):
     """Factory to create sequences."""
@@ -659,22 +665,22 @@ class SequenceFactory(object):
             "SequenceFactory")
         self._regexp_type = regexp_type
 
-    def createSequence(self, char):
+    def create_sequence(self, char):
         """Creates a sequence containing the character `char`."""
         return Sequence(Char(char, self._regexp_type))
 
-    def addSequences(self, left, right):
+    def add_sequences(self, left, right):
         """Try to append `right` to `left`. If it fails than create a new 
         sequence containing both."""
-        if (left.appendSequence(right)):
-            right.setContained()
+        if (left.append_sequence(right)):
+            right.set_contained()
             return left
         else:
             sequence = MultiSequence()
-            left.setContained()
-            right.setContained()
-            sequence.appendSequence(left)
-            sequence.appendSequence(right)
+            left.set_contained()
+            right.set_contained()
+            sequence.append_sequence(left)
+            sequence.append_sequence(right)
             return sequence
 
 class Node:
@@ -684,7 +690,7 @@ class Node:
     """
     def __init__(self, characters, regexp_type):
         """characters : the characters the node will have to match.
-        regexp_type : ("strict" | "lax")"""
+        regexp_type : ("strict" | "lax") not used for now."""
         self._len = len(characters)
         self._range = characters
         characters = list(set(characters))
@@ -695,35 +701,35 @@ class Node:
         self._root_sequence = None
         factory = SequenceFactory("strict")
         for char in characters:
-            new_sequence = factory.createSequence(char)
+            new_sequence = factory.create_sequence(char)
             if (None == self._root_sequence):
                 self._root_sequence = new_sequence
             else:
-                self._root_sequence = factory.addSequences(
+                self._root_sequence = factory.add_sequences(
                     self._root_sequence, new_sequence)
         # make sure that the number of intervals is minimal
         self._root_sequence.merge()
 
-    def setOptional(self):
+    def set_optional(self):
         """Force this node to consider that the list of provided characters 
         was not complete and thus that this node may represent the absence of 
         a character."""
-        self._root_sequence.setOptional()
+        self._root_sequence.set_optional()
 
-    def getIsOptional(self):
+    def get_is_optional(self):
         """Return True if and only if the node does not necessarily contain 
         a character."""
-        return self._root_sequence.getIsOptional()
+        return self._root_sequence.get_is_optional()
 
-    def getLength(self):
+    def get_length(self):
         """Maybe the nale is not appropriate.
         Returns the number of characters provided to the constructor."""
         return self._len
 
-    def getString(self, regexp_type = "strict"):
+    def get_string(self, regexp_type = "strict"):
         """Returns the mini regular expression coding for this character 
         without considering the possibility that it is optional."""
-        return self._root_sequence.getString(regexp_type)
+        return self._root_sequence.get_string(regexp_type)
 
 def generate(sample_strings, regexp_type = "lax"):
     """`sample_strings`: list of strings for which to generate a matching 
@@ -741,9 +747,9 @@ def generate(sample_strings, regexp_type = "lax"):
     logging.debug("min_length = " + str(min_length))
     for i in range(max_length):
         intervals.append([])
-    for string in sample_strings:
+    for sample_string in sample_strings:
         i = 0
-        for char in string:
+        for char in sample_string:
             intervals[i].append(char)
             i += 1
     logging.debug(str(intervals))
@@ -758,7 +764,7 @@ def generate(sample_strings, regexp_type = "lax"):
         if (i > min_length):
             # we have gone further than what the shortest string could reach 
             # so any node after this point may contain no character.
-            node.setOptional()
+            node.set_optional()
         nodes.append(node)
 
     ref_node = None
@@ -771,51 +777,12 @@ def generate(sample_strings, regexp_type = "lax"):
     result = ""
     # the job of this not too self explanatory loop is to group consecutive 
     # nodes that match exaclty the same characters.
-    for node in nodes:
-        logging.debug("node.getString(regexp_type) = %s", 
-            node.getString(regexp_type))
-        logging.debug("node.getLength() = %i", node.getLength())        
-        if (None != ref_node):
-            if (ref_node.getString(regexp_type) == 
-                node.getString(regexp_type)):
-                if (not node.getIsOptional()):
-                    left += 1
-                count += 1
-            else:
-                result += ref_node.getString(regexp_type)
-                if (count > 1):
-                    if ((left == count)):
-                        logging.debug("{%i}", count)
-                        result += "{" + str(count) + "}"
-                    else:
-                        logging.debug("{%i-%i}", left, count)
-                        result += "{" + str(left) + "," + str(count) + "}"
-                elif (ref_node.getIsOptional()):
-                    result += "?"
-                ref_node = node
-                logging.debug("next ref_node")
-                logging.debug("ref_node.getString(regexp_type) = %s", 
-                    ref_node.getString(regexp_type))
-                logging.debug("ref_node.getLength() = %i", 
-                    ref_node.getLength())
-                count = 1
-                if (ref_node.getIsOptional()):
-                    left = 0
-                else:
-                    left = 1
-        else:
-            logging.debug("create ref_node")
-            ref_node = node
-            count = 1
-            if (ref_node.getIsOptional()):
-                left = 0
-            else:
-                left = 1
-            logging.debug("ref_node.getString(regexp_type) = %s", 
-                ref_node.getString(regexp_type))
-            logging.debug("ref_node.getLength() = %i", ref_node.getLength())
-    if (None != ref_node):
-        result += ref_node.getString(regexp_type)
+    def finish_node(result):
+        """Computes the cardinality of the node and and the needed characters 
+        to the regular expression after the node if needed.
+        `result`: initial representation of the regular expression.
+        Returns the regular expression with one more node."""
+        result += ref_node.get_string(regexp_type)
         if (count > 1):
             if ((left == count)):
                 logging.debug("{%i}", count)
@@ -823,11 +790,50 @@ def generate(sample_strings, regexp_type = "lax"):
             else:
                 logging.debug("{%i-%i}", left, count)
                 result += "{" + str(left) + "," + str(count) + "}"
-        elif (ref_node.getIsOptional()):
+        elif (ref_node.get_is_optional()):
             result += "?"
-    def getString(value):
-        return value.getString()
-    logging.debug(map(getString, nodes))
+        return result
+    for node in nodes:
+        logging.debug("node.get_string(regexp_type) = %s", 
+            node.get_string(regexp_type))
+        logging.debug("node.get_length() = %i", node.get_length())        
+        if (None != ref_node):
+            if (ref_node.get_string(regexp_type) == 
+                node.get_string(regexp_type)):
+                if (not node.get_is_optional()):
+                    left += 1
+                count += 1
+            else:
+                result = finish_node(result)
+                ref_node = node
+                logging.debug("next ref_node")
+                logging.debug("ref_node.get_string(regexp_type) = %s", 
+                    ref_node.get_string(regexp_type))
+                logging.debug("ref_node.get_length() = %i", 
+                    ref_node.get_length())
+                count = 1
+                if (ref_node.get_is_optional()):
+                    left = 0
+                else:
+                    left = 1
+        else:
+            logging.debug("create ref_node")
+            ref_node = node
+            count = 1
+            if (ref_node.get_is_optional()):
+                left = 0
+            else:
+                left = 1
+            logging.debug("ref_node.get_string(regexp_type) = %s", 
+                ref_node.get_string(regexp_type))
+            logging.debug("ref_node.get_length() = %i", ref_node.get_length())
+    if (None != ref_node):
+        result = finish_node(result)
+    def get_string(value):
+        """Wrapper around `get_string()`.
+        Returns the `get_string()` from `value`."""
+        return value.get_string()
+    logging.debug(map(get_string, nodes))
     import re
     logging.debug("result = " + result)
     # now check that the regular expression matches all the sample strings
@@ -845,7 +851,7 @@ def generate(sample_strings, regexp_type = "lax"):
 #                                                                             #
 ###############################################################################
 
-def checkEqual(expected, gotten):
+def check_equal(expected, gotten):
     """`expected`: string containing the expected result.
     `gotten`: string containing what has realy been computed.
     Logs "OK" if `expected` and `gotten` are equal, and an error message 
@@ -864,7 +870,7 @@ def test_generate(data, regexp_type, expected = None):
     exp = generate(data, regexp_type)
     logging.info(str(data) +  " -> " + exp)
     if (None != expected):
-        checkEqual(expected, exp)
+        check_equal(expected, exp)
 
 test_generate([ "5", "2" ], "lax", "\d")
 test_generate([ "A", "2" ], "lax", "[2A]")
@@ -886,28 +892,32 @@ test_generate([ "j", "N", "Z", "t" ], "lax", "\w")
 test_generate([ "x", "J", "B", "H" ], "lax", "\w")
 test_generate([ "2", "c", "y" ], "strict", "[2cy]")
 
-def getRandomString(desired_length):
-    import string
+def get_random_string(desired_length):
+    """Returns a random string of length `desired_length` containing digits, 
+    letters, punctuation or space like characters."""
+    import string #TODO: find a replacment for this module
     import random
     import sre_parse
     return "".join([random.choice(string.letters + string.digits + 
             string.punctuation + sre_parse.CATEGORY_SPACE) 
-        for x in range(0, desired_length)]) 
+        for _ in range(0, desired_length)]) 
 
-def getRandomStringLight(desired_length):
-    import string
+def get_random_string_light(desired_length):
+    """Returns a random string of length `desired_length` containing digits, 
+    some special or space like characters."""
+    import string #TODO: find a replacment for this module
     import random
     import sre_parse
     return "".join([random.choice(string.letters + string.digits + "[]-?+*" + 
             sre_parse.CATEGORY_SPACE) 
-        for x in range(0, desired_length)]) 
+        for _ in range(0, desired_length)]) 
 
-r1 = [getRandomString(12), getRandomString(12), 
-    getRandomString(12), getRandomString(12)]
-r2 = [getRandomString(12), getRandomString(11), 
-    getRandomString(10), getRandomString(9)]
-r3 = [getRandomString(40), getRandomString(40), getRandomString(40), 
-    getRandomString(40), getRandomString(40), getRandomString(40)]
+r1 = [get_random_string(12), get_random_string(12), 
+    get_random_string(12), get_random_string(12)]
+r2 = [get_random_string(12), get_random_string(11), 
+    get_random_string(10), get_random_string(9)]
+r3 = [get_random_string(40), get_random_string(40), get_random_string(40), 
+    get_random_string(40), get_random_string(40), get_random_string(40)]
 test_generate(r1, "lax")
 test_generate(r1, "strict")
 test_generate(r2, "lax")
@@ -925,7 +935,7 @@ test_generate(
     ['^L-p0]cft(&', '0IFrP%xp$M', ')`yg%!5F+', 'z0ho)L{*'], "strict")
 long_list = []
 for i in range(25):
-    long_list.append(getRandomStringLight(3))
+    long_list.append(get_random_string_light(3))
 logging.info("test_generate: long_list")
 test_generate(long_list, "lax")
 test_generate(long_list, "strict")
