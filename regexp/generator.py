@@ -28,171 +28,7 @@
 
 import logging
 import logger
-
-def escape_char(char):
-    """`char`: character to escape if needed.
-    Returns a character so that it can be inserted in a regular expression, 
-    escaping it if needed."""
-    import sre_parse
-    if (char is None):
-        return ''
-    if ((char in sre_parse.SPECIAL_CHARS) or ("-" == char) or ("]" == char)):
-        return "\\" + char
-    return char
-
-class Char:
-    """
-    >>> Char('a').get_category()
-    'LOWER_CASE_LETTER'
-    >>> Char('G').get_category()
-    'UPPER_CASE_LETTER'
-    >>> Char(' ').get_category()
-    'category_space'
-    >>> Char('\\t').get_category()
-    'category_space'
-    >>> Char('?').get_category()
-    'SPECIAL'
-    >>> Char('_').get_category()
-    'OTHER_WORD'
-    >>> Char(None).get_category()
-    'NONE'
-    >>> (Char('4').get_category() == Char('7').get_category())
-    True
-    >>> (Char('A').get_category() == Char('G').get_category())
-    True
-    >>> (Char('f').get_category() == Char('i').get_category())
-    True
-    >>> (Char('+').get_category() == Char('?').get_category())
-    True
-    >>> (Char('-').get_category() == Char('~').get_category())
-    True
-    >>> # '_' is in its own category ('OTHER_WORD')
-    >>> (Char('_').get_category() != Char('\').get_category())
-    True
-    """
-
-    SPECIAL = 'SPECIAL'
-    UNKNOWN = 'UNKNOWN'
-    LOWER_CASE_LETTER = 'LOWER_CASE_LETTER'
-    UPPER_CASE_LETTER = 'UPPER_CASE_LETTER'
-    OTHER_WORD = 'OTHER_WORD'
-    NONE = 'NONE'
-
-    def __init__(self, char, regexp_type = "strict"):
-        import sre_parse
-        from sre_parse import SPECIAL_CHARS, CATEGORY_DIGIT
-        from sre_parse import WHITESPACE, CATEGORY_SPACE
-
-        self._regexp_type = regexp_type
-
-        if (char is None):
-            self._category = Char.NONE
-        elif ('_' == char):
-            self._category = Char.OTHER_WORD
-        elif (char in sre_parse.DIGITS):
-            self._category = CATEGORY_DIGIT
-        elif (char in SPECIAL_CHARS):
-            self._category = Char.SPECIAL
-        elif (char in WHITESPACE):
-            self._category = CATEGORY_SPACE
-        elif (char.isalpha()):
-            if (char.islower()):
-                self._category = Char.LOWER_CASE_LETTER
-            else:
-                self._category = Char.UPPER_CASE_LETTER
-        else:
-            self._category = Char.UNKNOWN
-        self._char = char
-        logging.debug("char = " + str(char))
-        logging.debug("self._category = " + self._category)
-
-    def get_all_categories():
-        """Returns all possible categories for a character."""
-        from sre_parse import CATEGORY_DIGIT
-        from sre_parse import CATEGORY_SPACE
-        return [CATEGORY_DIGIT, Char.SPECIAL, CATEGORY_SPACE, 
-            Char.LOWER_CASE_LETTER, Char.UPPER_CASE_LETTER, 
-            Char.UNKNOWN]
-
-    def get_category(self):
-        """Returns the category of this character."""
-        return self._category
-
-    def get_char(self):
-        """Returns the wrapped character."""
-        return self._char
-
-    def get_string(self):
-        """Returns a representation of the character that can be includede in 
-        a regular expression."""
-        return escape_char(self._char)
-
-    def get_is_ordered(self):
-        """Returns True if and only if the character is a digit or a letter
-        (which are ordered)."""
-        from sre_parse import CATEGORY_DIGIT
-        return (self._category in [CATEGORY_DIGIT, 
-            Char.LOWER_CASE_LETTER, Char.UPPER_CASE_LETTER])
-
-    def __eq__(self, other_char):
-        if (other_char is None):
-            return False
-        return (self._char == other_char.get_char())
-
-    def __ne__(self, other_char):
-        if (other_char is None):
-            return True
-        return (self._char != other_char.get_char())
-
-    def __lt__(self, other_char):
-        if (other_char is None):
-            return True
-        return (self._char < other_char.get_char())
-
-    def __gt__(self, other_char):
-        if (other_char is None):
-            return False
-        return (self._char > other_char.get_char())
-
-# constants
-DIGITS = Char('0').get_category()
-"""Sample for digits category."""
-LOWER_CASE_LETTERS = Char('a').get_category()
-"""Sample for lower case letters category."""
-UPPER_CASE_LETTERS = Char('A').get_category()
-"""Sample for upper case letters category."""
-SPACES = Char(' ').get_category()
-"""Sample for spaces category."""
-OTHERS = Char('-').get_category()
-"""Sample for 'characters not in any other category' category."""
-OTHER_WORDS = Char('_').get_category()
-"""Sample for 'character(s) that are included in the \w class but are not in 
-any other category' category."""
-SPECIALS = Char('?').get_category()
-"""Sample for characters that need to be escaped because they have a special 
-meaning category."""
-#EMPTY = Char(None)
-
-CATEGORY_WORDS = set(
-    [DIGITS, LOWER_CASE_LETTERS, UPPER_CASE_LETTERS, OTHER_WORDS])
-CATEGORY_HAVE_CLASS = CATEGORY_WORDS
-CATEGORY_HAVE_CLASS.add(SPACES)
-
-"""
->>> DIGITS in CATEGORY_HAVE_CLASS
-True
->>> LOWER_CASE_LETTERS in CATEGORY_HAVE_CLASS
-True
->>> UPPER_CASE_LETTERS in CATEGORY_HAVE_CLASS
-True
->>> OTHER_WORDS in CATEGORY_HAVE_CLASS
-True
->>> for char in [SPACES, OTHERS, SPECIALS]:
->>>     char.get_category() in CATEGORY_HAVE_CLASS
-True
-True
-True
-"""
+from characters import *
 
 """
 Concatenation of two sequences
@@ -393,7 +229,7 @@ class Sequence(BaseSequence):
         If `regexp_type` is "lax" the representation of the class will be used
         for some characters :
             - digit -> \d
-            - letter or '_' -> \w
+#            - letter or '_' -> \w
             - space -> \s        
         If the sequence is not contained and more than one character or 
         different from a class is returned brakets will be added unless the 
@@ -401,11 +237,19 @@ class Sequence(BaseSequence):
         use_brackets = False
         string = ""
         if (("lax" == regexp_type) and (self._max != self._min) and 
-            (self.get_category() in CATEGORY_HAVE_CLASS)):
+#            (self.get_category() in CATEGORY_HAVE_CLASS)):
+            (self.get_category() in [DIGITS, SPACES, LOWER_CASE_LETTERS, 
+                UPPER_CASE_LETTERS])):
             if (self.get_category() == DIGITS):
                 string = "\d"
-            elif (self.get_category() in CATEGORY_WORDS):
-                string = "\w"
+#            elif (self.get_category() in CATEGORY_WORDS):
+#                string = "\w"
+            elif (self.get_category() == LOWER_CASE_LETTERS):
+                string = "a-z"
+                use_brackets = True
+            elif (self.get_category() == UPPER_CASE_LETTERS):
+                string = "A-Z"
+                use_brackets = True
             elif (self.get_category() == SPACES):
                 string = "\s"
             else:
@@ -502,7 +346,7 @@ class MultiSequence(BaseSequence):
         if (MultiSequence.OR == self._kind):
             return None
         elif (MultiSequence.AND == self._kind):
-            if (len(self._sequences) == 1):
+            if (len(self._sequences) == 0):
                 return None
             else:
                 return self._sequences.keys()[0]
@@ -521,37 +365,71 @@ class MultiSequence(BaseSequence):
 #            self._optional = True
 #            return False
         appended = False
+        other_category = sequence.get_category()
         if (MultiSequence.OR == self._kind):
             if (sequence.is_leaf()):
-                # you can only put leaves inside
-                sequences = self._sequences[sequence.get_category()]
+                other_sequences = [sequence]
+            else:
+                other_sequences = sequence._sequences[other_category]
+            sequences = self._sequences[other_category]
+            for sub_sequence in other_sequences:
+                appended = False
                 if (len(sequences) > 0):
                     for pivot in sequences:
-                        if (pivot.append_sequence(sequence)):
+                        if (pivot.append_sequence(sub_sequence)):
                             appended = True
                             break
                     if (not appended):
-                        sequences.append(sequence)
+                        sequences.append(sub_sequence)
                         appended = True
                 else:
-                    sequences.append(sequence)
+                    sequences.append(sub_sequence)
                     appended = True
+#                sub_sequence.set_contained()
         else:
             if (sequence.is_leaf()):
                 if (len(self._sequences.keys()) == 0):
-                    self._sequences[sequence.get_category()] = []
-                    self._sequences[sequence.get_category()].append(sequence)
+                    self._sequences[other_category] = []
+                    self._sequences[other_category].append(sequence)
                     appended = True
                 else:
-                    if (self._sequences.has_key(sequence.get_category())):
+                    if (self._sequences.has_key(other_category)):
                         # when 'AND' only put together sequences of the same 
                         # category
-                        for pivot in self._sequences[sequence.get_category()]:
+                        for pivot in self._sequences[other_category]:
                             appended |= pivot.append_sequence(sequence)
                         if (not appended):
-                            self._sequences[sequence.get_category()].append(
+                            self._sequences[other_category].append(
                                 sequence)
                             appended = True
+            else:
+                if (len(self._sequences.keys()) == 0):
+                    self._sequences[other_category] = []
+                    for key in sequence._sequences:
+                        sub_sequence = sequence._sequences[key]
+                        self._sequences[other_category].append(
+                            sub_sequence)
+                    appended = True
+                else:
+                    if (self._sequences.has_key(other_category)):
+                        # when 'AND' only put together sequences of the same 
+                        # category
+                        for key in sequence._sequences:
+                            sub_sequences = sequence._sequences[key]
+                            for sub_sequence in sub_sequences:
+                                appended = False
+                                for pivot in self._sequences[other_category]:
+#                                    pivot.set_contained()
+                                    appended |= (
+                                        pivot.append_sequence(sub_sequence))
+                                    if (appended):
+                                        break
+                                if (not appended):
+                                    self._sequences[other_category].append(
+                                        sub_sequence)
+                                    appended = True
+#                                sub_sequence.set_contained()
+
         return appended
 
     def merge(self):
@@ -562,6 +440,11 @@ class MultiSequence(BaseSequence):
         for key in old_sequences.keys():
             for sequence in old_sequences[key]:
                 self.append_sequence(sequence)
+        multi_key = (len(self._sequences.keys()) > 1)
+        for key in self._sequences.keys():
+            if ((multi_key) or (len(self._sequences[key]) > 1)):
+                for sequence in self._sequences[key]:
+                    sequence.set_contained()
 
     def get_string(self, regexp_type = "strict"):
         """This has only been implemented with OR kind in mind.
@@ -571,22 +454,28 @@ class MultiSequence(BaseSequence):
         If `regexp_type` is "lax" the representation of the class will be used 
         for some characters :
             - digit -> \d
-            - letter or '_' -> \w
+#            - letter or '_' -> \w
             - space -> \s
         If more than one character or different from a class is returned 
         brakets will be added unless the sequence is part of a bigger 
         interval."""
         string = ""
-        logging.debug("Sequence.get_string() [lax]")
+        logging.debug("Sequence.get_string(%s)" % regexp_type)
         add_digits_class = False
-        add_words_class = False
+#        add_words_class = False
+        add_lower_case_letters_class = False
+        add_upper_case_letters_class = False
         add_spaces_class = False
         digits = ""
-        words = ""
+#        words = ""
+        lower_case_letters = ""
+        upper_case_letters = ""
         spaces = ""
         others = ""
         added_digits = 0
-        added_words = 0
+#        added_words = 0
+        added_lower_case_letters = 0
+        added_upper_case_letters = 0
         added_spaces = 0
         added_others = 0
         for key in self._sequences.keys():
@@ -598,9 +487,15 @@ class MultiSequence(BaseSequence):
                     if (key == DIGITS):
                         processed = True
                         add_digits_class = True
-                    elif (key in CATEGORY_WORDS):
+#                    elif (key in CATEGORY_WORDS):
+#                        processed = True
+#                        add_words_class = True
+                    elif (key == LOWER_CASE_LETTERS):
                         processed = True
-                        add_words_class = True
+                        add_lower_case_letters_class = True
+                    elif (key == UPPER_CASE_LETTERS):
+                        processed = True
+                        add_upper_case_letters_class = True
                     elif (key == SPACES):
                         processed = True
                         add_spaces_class = True
@@ -609,9 +504,15 @@ class MultiSequence(BaseSequence):
                         if (key == DIGITS):
                             added_digits += 1
                             digits += sequence.get_string(regexp_type)
-                        elif (key in CATEGORY_WORDS):
-                            added_words += 1
-                            words += sequence.get_string(regexp_type)
+#                        elif (key in CATEGORY_WORDS):
+#                            added_words += 1
+#                            words += sequence.get_string(regexp_type)
+                        elif (key == LOWER_CASE_LETTERS):
+                            added_lower_case_letters += 1
+                            lower_case_letters += sequence.get_string(regexp_type)
+                        elif (key == UPPER_CASE_LETTERS):
+                            added_upper_case_letters += 1
+                            upper_case_letters += sequence.get_string(regexp_type)
                         elif (key == SPACES):
                             added_spaces += 1
                             spaces += sequence.get_string(regexp_type)
@@ -619,18 +520,33 @@ class MultiSequence(BaseSequence):
                             added_others += 1
                             others += sequence.get_string(regexp_type)
         added_count = 0
+        need_brackets = False
         if (("lax" == regexp_type) and (add_digits_class)):
             added_count += 1
             string += "\d"
         else:
             added_count += added_digits
             string += digits
-        if (("lax" == regexp_type) and (add_words_class)):
+#        if (("lax" == regexp_type) and (add_words_class)):
+#            added_count += 1
+#            string += "\w"
+#        else:
+#            added_count += added_words
+#            string += words
+        if (("lax" == regexp_type) and (add_lower_case_letters_class)):
             added_count += 1
-            string += "\w"
+            string += "a-z"
+            need_brackets = True
         else:
-            added_count += added_words
-            string += words
+            added_count += added_lower_case_letters
+            string += lower_case_letters
+        if (("lax" == regexp_type) and (add_upper_case_letters_class)):
+            added_count += 1
+            string += "A-Z"
+            need_brackets = True
+        else:
+            added_count += added_upper_case_letters
+            string += upper_case_letters
         if (("lax" == regexp_type) and (add_spaces_class)):
             added_count += 1
             string += "\s"
@@ -639,7 +555,7 @@ class MultiSequence(BaseSequence):
             string += spaces
         added_count += added_others
         string += others
-        if (added_count > 1):
+        if ((need_brackets) or (added_count > 1)):
             string = "[" + string + "]"
         return string
 
@@ -680,12 +596,20 @@ class SequenceFactory(object):
             sequence.append_sequence(right)
             return sequence
 
+    def try_add_sequences(self, left, right):
+        """Try to append `right` to `left`. If it fails than return None."""
+        if (left.append_sequence(right)):
+            right.set_contained()
+            return left
+        else:
+            return None
+
 class Node:
     """A node stands for a final character in the generated regular expression 
     (for now). It is responsible for building the appropriate sequences using 
     a `SequenceFactory`.
     """
-    def __init__(self, characters, regexp_type):
+    def __init__(self, characters, regexp_type = "strict"):
         """`characters`: the characters the node will have to match.
         `regexp_type`: ("strict" | "lax") not used for now."""
         self._len = len(characters)
@@ -728,16 +652,50 @@ class Node:
         without considering the possibility that it is optional."""
         return self._root_sequence.get_string(regexp_type)
 
-def generate(sample_strings, regexp_type = "lax"):
+def make_optional_tail(tail, tail_len, regexp_type = "lax"):
+    result = ""
+    if (tail_len > 1):
+        result += '(' * (tail_len - 1)
+        result += tail.pop(0)
+        for t in tail:
+            result += t + '?)'
+        result += '?'
+    else:
+        result += tail.pop(0) + '?'
+    return result
+
+def make_generated_tail(tail, tail_len, regexp_type = "lax"):
+    result = generate(tail, regexp_type)
+    if (tail_len > 1):
+        if (len(result) > 1):
+            result += "{%s}" % tail_len
+            result = "(" + result + ")?"
+        else:
+            result += "{0, %s}" % tail_len
+    else:
+        result += "?"
+    return result
+
+def generate(sample_strings, regexp_type = "lax", 
+    tail_handler = None, tail_regexp_type = None):
     """`sample_strings`: list of strings for which to generate a matching 
     regexp. It does not need to be ordered.
     `regexp_type`: ("lax" | "strict"). Using "lax" you will be more likely to 
     get generic regular expression, wheras "strict" will generate regular 
     expression much closer to the samples given.
+    `tail_handler`: function used to deal with the tail. The tail is the end 
+    of the regular expression to generate, whene there are not characters from 
+    all the sample strings available.
+    `tail_regexp_type`: ("lax" | "strict"). The regexp_type used when calling 
+    #tail_handler.
     Returns a regular expression that matches the sample strings. The 
     regular expression is checked against the strings at the end.
     An error is logged if the regular expression does not match one of the 
     provided string."""
+    if (tail_handler is None):
+        tail_handler = make_optional_tail
+    if (tail_regexp_type is None):
+        tail_regexp_type = regexp_type
     intervals = []
     # compute the length of the long_listuest and shortest strings
     all_lengths = map(len, sample_strings)
@@ -775,23 +733,28 @@ def generate(sample_strings, regexp_type = "lax"):
     left = None
     # Here it is! The result regular expression.
     result = ""
+    tail = []
     # the job of this not too self explanatory loop is to group consecutive 
     # nodes that match exaclty the same characters.
     def finish_node(sub_result):
         """Computes the cardinality of the node and and the needed characters 
         to the regular expression after the node if needed.
-        `result`: initial representation of the regular expression.
+        `sub_result`: initial representation of the regular expression.
         Returns the regular expression with one more node."""
-        sub_result += ref_node.get_string(regexp_type)
+        is_optional = False
+        new_result = ""
         if (count > 1):
             if ((left == count)):
                 logging.debug("{%i}", count)
-                sub_result += "{" + str(count) + "}"
+                new_result += "{" + str(count) + "}"
             else:
                 logging.debug("{%i-%i}", left, count)
-                sub_result += "{" + str(left) + "," + str(count) + "}"
+                new_result += "{" + str(left) + "," + str(count) + "}"
         elif (ref_node.get_is_optional()):
-            sub_result += "?"
+            tail.append(ref_node.get_string(regexp_type))
+            is_optional = True
+        if (not is_optional):
+            sub_result += ref_node.get_string(regexp_type) + new_result
         return sub_result
     for node in nodes:
         logging.debug("node.get_string(regexp_type) = %s", 
@@ -829,6 +792,18 @@ def generate(sample_strings, regexp_type = "lax"):
             logging.debug("ref_node.get_length() = %i", ref_node.get_length())
     if (None != ref_node):
         result = finish_node(result)
+    logging.debug("tail = %s" % tail)
+    tail_len = len(tail)
+    if (tail_len > 0):
+        result += tail_handler(tail, tail_len, tail_regexp_type)
+#        if (tail_len > 1):
+#            result += '(' * (tail_len - 1)
+#            result += tail.pop(0)
+#            for t in tail:
+#                result += t + '?)'
+#            result += '?'
+#        else:
+#            result += tail.pop(0) + '?'
     def get_string(value):
         """Wrapper around `get_string()`.
         Returns the `get_string()` from `value`."""
@@ -840,11 +815,12 @@ def generate(sample_strings, regexp_type = "lax"):
     # (which is a bare minimum)
     matcher = re.compile(result)
     for string in sample_strings:
+        string = str(string)
         if (matcher.match(string) is None):
             logging.error("Error: '" + result + "' does not match '" + 
                 string + "'")
     return result
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     import doctest
     doctest.testmod()
