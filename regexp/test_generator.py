@@ -6,6 +6,7 @@
 import generator
 import logger
 import logging
+from random_string import *
 
 def check_equal(expected, gotten):
     """`expected`: string containing the expected result.
@@ -18,25 +19,28 @@ def check_equal(expected, gotten):
     else:
         logging.info("OK")
 
-def test_generate(data, regexp_type, expected = None):
+def test_generate(data, regexp_type, expected = None, tail_handler = None,
+    tail_regexp_type = None):
     """`data`: list of strings used to generate the regular expression.
     `regexp_type`: "strict" | "lax"
     `expected`: if provided, string containing the expected regular expression.
     """
-    exp = generator.generate(data, regexp_type)
+    exp = generator.generate(data, regexp_type, tail_handler, tail_regexp_type)
     logging.info(str(data) +  " -> " + exp)
     if (None != expected):
         check_equal(expected, exp)
 
+test_generate(['u', 'u'], "strict", "u")
+test_generate(['a', 'b'], "strict", "[ab]")
 test_generate([ "5", "2" ], "lax", "\d")
 test_generate([ "A", "2" ], "lax", "[2A]")
 test_generate([ "A", "2" ], "strict", "[2A]")
 test_generate([ "Le petit chat dort.", "11/02/2004" ], "strict", 
-    "[1L][1e][ /][0p][2e][t/][2i][0t][0 ][4c]h?a?t? ?d?o?r?t?\.?")
+    "[1L][1e][ /][0p][2e][t/][2i][0t][0 ][4c]((((((((ha?)t?) ?)d?)o?)r?)t?)\.?)?")
 test_generate([ "Le petit chat dort.", "11/02/2004" ], "lax", 
-    "[1L][1e][ /][0p][2e][t/][2i][0t][0 ][4c]h?a?t? ?d?o?r?t?\.?")
+    "[1L][1e][ /][0p][2e][t/][2i][0t][0 ][4c]((((((((ha?)t?) ?)d?)o?)r?)t?)\.?)?")
 test_generate([ "AAAA", "11" ], "lax", "[1A]{2}A{0,2}")
-test_generate([ "1 2 3", "abcdefg" ], "lax", "[1a][b ][2c][d ][3e]f?g?")
+test_generate([ "1 2 3", "abcdefg" ], "lax", "[1a][b ][2c][d ][3e](fg?)?")
 test_generate([ "   ", "1/2" ], "lax", "[1 ][ /][2 ]")
 test_generate([ " ", "/" ], "lax", "[ /]")
 test_generate([ "1", "12" ], "lax", "12?")
@@ -44,29 +48,10 @@ test_generate([ " ", "  " ], "lax", " {1,2}")
 test_generate([ "1", "11" ], "lax", "1{1,2}")
 test_generate([ "1", "11", "234", "999 " ], "lax", "\d{1,3} ?")
 
-test_generate([ "j", "N", "Z", "t" ], "lax", "\w")
-test_generate([ "x", "J", "B", "H" ], "lax", "\w")
+test_generate([ "j", "N", "Z", "t" ], "lax", "[a-zA-Z]")
+test_generate([ "x", "J", "B", "H" ], "lax", "[xA-Z]")
 test_generate([ "2", "c", "y" ], "strict", "[2cy]")
 
-def get_random_string(desired_length):
-    """Returns a random string of length `desired_length` containing digits, 
-    letters, punctuation or space like characters."""
-    import string #TODO: find a replacment for this module
-    import random
-    import sre_parse
-    return "".join([random.choice(string.letters + string.digits + 
-            string.punctuation + sre_parse.CATEGORY_SPACE) 
-        for _ in range(0, desired_length)]) 
-
-def get_random_string_light(desired_length):
-    """Returns a random string of length `desired_length` containing digits, 
-    some special or space like characters."""
-    import string #TODO: find a replacment for this module
-    import random
-    import sre_parse
-    return "".join([random.choice(string.letters + string.digits + "[]-?+*" + 
-            sre_parse.CATEGORY_SPACE) 
-        for _ in range(0, desired_length)]) 
 
 r1 = [get_random_string(12), get_random_string(12), 
     get_random_string(12), get_random_string(12)]
@@ -110,9 +95,9 @@ test_generate(['c6cG]NHp7', 'Epx5acgex', 'tGe8+HjSY', 'y0plbKtsO',
     'vl*hee2r5'], "strict", 
 "[0-25-7acdjort-zBCEH-JLMRV-Z\]\*\[][0-26-8a-cehj-lopr-tvwyA-DGI-LRVXZ][14-6ac\
 -em-pr-ux-zD-FIKORTV-Y\]\*\+][257-9aceghjlopr-tABF-JLMORSYZ\-\]\*\?][02abd-hkm\
--uyzA-EGKLQSVY\]\+\?\[][269acefhim-or-tvw_E-HKM-OQTV\]\*\[][124-79c-egjkmnptyz\
-ABDHO-QSUVY\-\?][027a-gjlpr-twyAEFILN-PSWX\+\?\[][013-57a-cefjmpsw-z_ABHJL-RVX\
-Y\+\[]")
+-uyzA-EGKLQSVY\]\+\?\[][269acefhim-or-tvwE-HKM-OQTV_\]\*\[][124-79c-egjkmnptyz\
+ABDHO-QSUVY\-\?][027a-gjlpr-twyAEFILN-PSWX\+\?\[][013-57a-cefjmpsw-zABHJL-RVXY\
+_\+\[]")
 
 
 big = ["bigLogXXX_100821_003795.tar.gz",
@@ -220,13 +205,23 @@ test_generate(["1", "2"], "strict", "[12]")
 test_generate(["1", "a"], "strict", "[1a]")
 test_generate(["112", "abc"], "strict", "[1a][1b][2c]")
 test_generate(["1", "3", "2", "5", "4"], "strict", "[1-5]")
-test_generate(["5289", "ecum", "dy"], "strict", "[5de][2cy][8u]?[9m]?")
+test_generate(["5289", "ecum", "dy"], "strict", "[5de][2cy]([8u][9m]?)?")
 test_generate(big, "lax", "bigLogX{3}_10{2}82\d_\d{6}\.tar\.gz")
 test_generate(big, "strict", 
     "bigLogX{3}_10{2}82[01]_[0-2][0-9][1-9][3479][249][35]\.tar\.gz")
 
 small = ["123", "124", "125", "128", "134"]
 test_generate(small, "lax", "1\d{2}")
+test_generate(small, "strict", "1[23][3-58]")
+small.append("1234")
+test_generate(small, "lax", "1\d{2}4?")
+test_generate(small, "strict", "1[23][3-58]4?")
 test_generate(["3", "4"], "lax", "\d")
 test_generate(["5", "4"], "lax", "\d")
 test_generate(["5", "2"], "lax", "\d")
+test_generate(["abc", "abc123az"], "lax", "abc([1-3az]{5})?", 
+    generator.make_generated_tail, "strict")
+test_generate(["abc", "abc123az"], "lax", "abc([\da-z]{5})?", 
+    generator.make_generated_tail, "lax")
+test_generate(["5"], "lax", "5")
+test_generate(["5"], "strict", "5")
