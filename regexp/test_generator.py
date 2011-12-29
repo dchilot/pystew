@@ -30,6 +30,14 @@ def test_generate(data, regexp_type, expected = None, tail_handler = None,
     if (None != expected):
         check_equal(expected, exp)
 
+# this fails!!!
+test_generate(["5289", "ecum", "dy"], "strict", "[5de][2cy]([8u][9m]?)?")
+test_generate(['', 'les', 'lapin'], "lax", "(l[a-z]{2}(in)?)?",
+    generator.make_generated_tail, "lax")
+test_generate(['.', '', ' '], "lax", "[ \.]?",
+    generator.make_generated_tail, "lax")
+test_generate(['dort', '', 'e'], "lax", "([a-z](ort)?)?",
+    generator.make_generated_tail, "lax")
 test_generate(['u', 'u'], "strict", "u")
 test_generate(['a', 'b'], "strict", "[ab]")
 test_generate([ "5", "2" ], "lax", "\d")
@@ -51,6 +59,7 @@ test_generate([ "1", "11", "234", "999 " ], "lax", "\d{1,3} ?")
 test_generate([ "j", "N", "Z", "t" ], "lax", "[a-zA-Z]")
 test_generate([ "x", "J", "B", "H" ], "lax", "[xA-Z]")
 test_generate([ "2", "c", "y" ], "strict", "[2cy]")
+
 
 
 r1 = [get_random_string(12), get_random_string(12), 
@@ -205,7 +214,6 @@ test_generate(["1", "2"], "strict", "[12]")
 test_generate(["1", "a"], "strict", "[1a]")
 test_generate(["112", "abc"], "strict", "[1a][1b][2c]")
 test_generate(["1", "3", "2", "5", "4"], "strict", "[1-5]")
-test_generate(["5289", "ecum", "dy"], "strict", "[5de][2cy]([8u][9m]?)?")
 test_generate(big, "lax", "bigLogX{3}_10{2}82\d_\d{6}\.tar\.gz")
 test_generate(big, "strict", 
     "bigLogX{3}_10{2}82[01]_[0-2][0-9][1-9][3479][249][35]\.tar\.gz")
@@ -219,9 +227,27 @@ test_generate(small, "strict", "1[23][3-58]4?")
 test_generate(["3", "4"], "lax", "\d")
 test_generate(["5", "4"], "lax", "\d")
 test_generate(["5", "2"], "lax", "\d")
+
+logging.info("Warning: entering fuzzy zone, the tests do not pass")
+# not sure about what the result should be
 test_generate(["abc", "abc123az"], "lax", "abc([1-3az]{5})?", 
     generator.make_generated_tail, "strict")
+# not sure about what the result should be either
 test_generate(["abc", "abc123az"], "lax", "abc([\da-z]{5})?", 
     generator.make_generated_tail, "lax")
+
+# not sure about what the result should be
+test_generate(["abc", "abc123az"], "lax", "abc([1-3az]{5})?", 
+    generator.make_optional_tail, "strict")
+# not sure about what the result should be either
+test_generate(["abc", "abc123az"], "lax", "abc([\da-z]{5})?", 
+    generator.make_optional_tail, "lax")
+logging.info("Exiting fuzzy zone, the following tests will pass again")
+
 test_generate(["5"], "lax", "5")
 test_generate(["5"], "strict", "5")
+test_generate(["."], "strict", "\.")
+test_generate([".", ""], "lax", "\.?")
+test_generate(["", "."], "lax", "\.?",
+    generator.make_generated_tail, "lax")
+
