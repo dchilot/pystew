@@ -30,7 +30,6 @@ def test_generate(data, regexp_type, expected = None, tail_handler = None,
     if (None != expected):
         check_equal(expected, exp)
 
-# this fails!!!
 test_generate(["5289", "ecum", "dy"], "strict", "[5de][2cy]([8u][9m]?)?")
 test_generate(['', 'les', 'lapin'], "lax", "(l[a-z]{2}(in)?)?",
     generator.make_generated_tail, "lax")
