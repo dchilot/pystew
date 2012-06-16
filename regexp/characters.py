@@ -256,6 +256,7 @@ def get_categories_as_range(categories):
         is_range |= sub_is_range
     return string, is_range
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     import doctest
     doctest.testmod()
+
