@@ -37,8 +37,10 @@ sys.path.insert(0, path_to_more)
 import logging
 import logger
 
-from PyQt4 import QtGui
-import PyQt4
+from PySide import QtGui
+import PySide
+#from PyQt4 import QtGui
+#import PyQt4
 
 class Pair(object):
     def __init__(self, x, y, custom_hash = None):
@@ -348,13 +350,18 @@ class Label(QtGui.QLabel):
 
     def mousePressEvent(self, event):
         logging.debug("Click on cell " + repr(self._cell))
-        items = PyQt4.QtCore.QStringList()
+#        items = PyQt4.QtCore.QStringList()
+        items = []
         for value in self._cell.get_possibles():
             items.append(str(value))
-        text, ok = PyQt4.QtGui.QInputDialog.getItem(self, 
+        text, ok = PySide.QtGui.QInputDialog.getItem(self, 
             'Please choose a value for cell (%s, %s)' %
                 (self._cell.get_x(), self._cell.get_y()),
             'Value:', items)
+#        text, ok = PyQt4.QtGui.QInputDialog.getItem(self, 
+#            'Please choose a value for cell (%s, %s)' %
+#                (self._cell.get_x(), self._cell.get_y()),
+#            'Value:', items)
         if ok:
             value = int(text)
             logging.info("self._grid.get_at(%s, %s).set_value(%s)#, True)" % 
@@ -383,7 +390,9 @@ class Sudoku(QtGui.QWidget):
             for x in range(0, 9):
                 label = Label(self._grid.get_at(x, y))
                 label.setAlignment(
-                    PyQt4.QtCore.Qt.AlignHCenter | PyQt4.QtCore.Qt.AlignVCenter)
+                    PySide.QtCore.Qt.AlignHCenter | PySide.QtCore.Qt.AlignVCenter)
+#                label.setAlignment(
+#                    PyQt4.QtCore.Qt.AlignHCenter | PyQt4.QtCore.Qt.AlignVCenter)
                 grid.addWidget(label, y, x)
                 labels.append(label)
             self._labels.append(labels)
