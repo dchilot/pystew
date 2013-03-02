@@ -14,7 +14,7 @@ except ImportError:
 
 setup(
     name='pystew',
-    version='0.1',
+    version='0.2.0',
     description='Python scripts that eventually work.',
     author='',
     author_email='',
@@ -22,4 +22,9 @@ setup(
     test_suite='nose.collector',
     install_requires=[],
     tests_require=['nose'],
+    entry_points={
+        'console_scripts': [
+            'regexp_diff = pystew.regexp.diff:main',
+        ]
+    },
 )
