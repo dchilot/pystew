@@ -231,6 +231,18 @@ def equal(text, reference):
 def main():
     import sys
     import os
+    import optparse
+
+    parser = optparse.OptionParser(usage='usage: %prog file1 file2',
+                                   description='Compute the difference '
+                                   'between two files, one of which can '
+                                   'contain emeded regular expressions '
+                                   'between angle brackets (python re), '
+                                   'like "Today is {\w+}.". Warning: an extra '
+                                   'line containing "<EOF>" is added to have '
+                                   'better matches (but the principle is not '
+                                   'nice).')
+    (options, arguments) = parser.parse_args()
 
     def is_file_missing(file_name):
         if (not os.path.exists(file_name)):
@@ -238,8 +250,8 @@ def main():
             return True
         return False
     if (len(sys.argv) == 3):
-        quit = is_file_missing(sys.argv[1])
-        quit |= is_file_missing(sys.argv[2])
+        quit = is_file_missing(arguments[0])
+        quit |= is_file_missing(arguments[1])
         if (quit):
             sys.exit(1)
         with open(sys.argv[1]) as file1:
