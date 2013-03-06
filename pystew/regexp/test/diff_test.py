@@ -128,14 +128,18 @@ Let's add some text at the end."""
         print text
         print reference
         assert(pystew.regexp.equal(text, reference))
+        if ('win32' == sys.platform):
+            spaces = ' '
+        else:
+            spaces = '  '
         nearly = """This is a fake text.
 Today is 2012-12-15 15:42:43.60400 and this should not prevent a match.
 Let's add some text at the end.""".format(now=now)
         assert(not pystew.regexp.equal(nearly, reference))
         assert_equal(pystew.regexp.diff(nearly, reference), """\
---- """ + """
+---""" + spaces + """
 
-+++ """ + """
++++""" + spaces + """
 
 @@ -1,3 +1,3 @@
 
@@ -149,9 +153,9 @@ Today is {\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}} and this should not preven
 Let's add some text at the end."""
         print "diff with added line"
         assert_equal(pystew.regexp.diff(text, reference2), """\
---- """ + """
+---""" + spaces + """
 
-+++ """ + """
++++""" + spaces + """
 
 @@ -1,3 +1,4 @@
 
@@ -161,9 +165,9 @@ Let's add some text at the end."""
  Let's add some text at the end.""".format(now=now))
         print "diff with added line the revenge"
         assert_equal(pystew.regexp.diff(reference2, text), """\
---- """ + """
+---""" + spaces + """
 
-+++ """ + """
++++""" + spaces + """
 
 @@ -1,4 +1,3 @@
 
@@ -177,9 +181,9 @@ Today is {now} and this should not prevent a match.
 Let's add some text at the end.""".format(now=now)
         print "diff with added line 2"
         assert_equal(pystew.regexp.diff(text2, reference), """\
---- """ + """
+---""" + spaces + """
 
-+++ """ + """
++++""" + spaces + """
 
 @@ -1,4 +1,3 @@
 
@@ -189,9 +193,9 @@ Let's add some text at the end.""".format(now=now)
  Let's add some text at the end.""".format(now=now))
         print "diff with added line the revenge 2"
         assert_equal(pystew.regexp.diff(reference, text2), """\
---- """ + """
+---""" + spaces + """
 
-+++ """ + """
++++""" + spaces + """
 
 @@ -1,3 +1,4 @@
 
@@ -201,9 +205,9 @@ Let's add some text at the end.""".format(now=now)
  Let's add some text at the end.""")
         print "diff with added line 3"
         assert_equal(pystew.regexp.diff(text2, reference2), """\
---- """ + """
+---""" + spaces + """
 
-+++ """ + """
++++""" + spaces + """
 
 @@ -1,4 +1,4 @@
 
@@ -214,9 +218,9 @@ Let's add some text at the end.""".format(now=now)
  Let's add some text at the end.""".format(now=now))
         print "diff with added line the revenge 3"
         assert_equal(pystew.regexp.diff(reference2, text2), """\
---- """ + """
+---""" + spaces + """
 
-+++ """ + """
++++""" + spaces + """
 
 @@ -1,4 +1,4 @@
 
@@ -225,7 +229,6 @@ Let's add some text at the end.""".format(now=now)
 +This is a new line !
  Today is {\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}} and this should not prevent a match.
  Let's add some text at the end.""")
-        #assert(False)
 
     def test_2(self):
         text = """Line 1.
@@ -279,14 +282,19 @@ class TestMain(unittest.TestCase):
     def test_errors(self):
         # there must be a better way to give arguments ...
         sys.argv = ["diff"]
-        with self.assertRaises(SystemExit):
-            pystew.regexp.main()
-        with self.assertRaises(SystemExit):
-            sys.argv.append("a")
-            pystew.regexp.main()
-        with self.assertRaises(SystemExit):
-            sys.argv.append(os.path.join(cmd_subfolder, "regexp", "diff.py"))
-            pystew.regexp.main()
+        self.assertRaises(SystemExit, pystew.regexp.main)
+        #with self.assertRaises(SystemExit):
+            #pystew.regexp.main()
+        sys.argv.append("a")
+        self.assertRaises(SystemExit, pystew.regexp.main)
+        #with self.assertRaises(SystemExit):
+            #sys.argv.append("a")
+            #pystew.regexp.main()
+        sys.argv.append(os.path.join(cmd_subfolder, "regexp", "diff.py"))
+        self.assertRaises(SystemExit, pystew.regexp.main)
+        #with self.assertRaises(SystemExit):
+            #sys.argv.append(os.path.join(cmd_subfolder, "regexp", "diff.py"))
+            #pystew.regexp.main()
         assert_equal("""Sorry the program does not understand the parameters.
 The expected syntax is :
 diff file1 file2
@@ -298,9 +306,10 @@ No such file or directory: 'a'
         assert_equal("", sys.stdout.getvalue())
 
     def test_ok(self):
-        f1 = os.path.join('test', 'reference.txt')
-        f2 = os.path.join('test', 'compared.txt')
-        sys.argv = ["diff", f1, f2]
+        test_dir = os.path.join(cmd_subfolder, 'regexp', 'test')
+        f1 = os.path.join(test_dir, 'reference.txt')
+        f2 = os.path.join(test_dir, 'compared.txt')
+        sys.argv = [os.path.join(cmd_subfolder, 'regexp', "diff.py"), f1, f2]
         pystew.regexp.main()
         assert_equal("\n", sys.stdout.getvalue())
         assert_equal("", sys.stderr.getvalue())
@@ -309,23 +318,49 @@ No such file or directory: 'a'
 class TestBin(unittest.TestCase):
     def test_equal(self):
         import subprocess
-        f1 = os.path.join('test', 'reference.txt')
-        f2 = os.path.join('test', 'compared.txt')
-        call = subprocess.Popen(["python.exe", "diff.py", f1, f2], stdout=subprocess.PIPE)
+        test_dir = os.path.join(cmd_subfolder, 'regexp', 'test')
+        f1 = os.path.join(test_dir, 'reference.txt')
+        f2 = os.path.join(test_dir, 'compared.txt')
+        call = subprocess.Popen(["python",
+                                 os.path.join(cmd_subfolder,
+                                              'regexp', "diff.py"),
+                                 f1, f2],
+                                stdout=subprocess.PIPE)
         stdout, stderr = call.communicate()
         print stdout
         print "----"
         print stderr
-        #assert_equal('', stdout)
-        assert_equal('\r\n', stdout)
+        if ('win32' == sys.platform):
+            eol = '\r\n'
+        else:
+            eol = '\n'
+        assert_equal(eol, stdout)
 
     def test_different(self):
         import subprocess
-        f1 = os.path.join('test', 'reference.txt')
-        f2 = os.path.join('test', 'different.txt')
-        call = subprocess.Popen(["python.exe", "diff.py", f1, f2], stdout=subprocess.PIPE)
+        test_dir = os.path.join(cmd_subfolder, 'regexp', 'test')
+        f1 = os.path.join(test_dir, 'reference.txt')
+        f2 = os.path.join(test_dir, 'different.txt')
+        call = subprocess.Popen(["python",
+                                 os.path.join(cmd_subfolder, 'regexp', "diff.py"),
+                                 f1, f2],
+                                stdout=subprocess.PIPE)
         stdout, stderr = call.communicate()
         print stdout
         print "----"
         print stderr
-        assert_equal('--- \r\n\r\n+++ \r\n\r\n@@ -1,6 +1,5 @@\r\n\r\n Line 1 {\\d+}\r\n Line 2 {\\d{1,2}}\r\n Line 3 {\\d{1}}\r\n-Line 4 {\\d{1}}\r\n {.*}\r\n <EOF>\r\n', stdout)
+        if ('win32' == sys.platform):
+            spaces = ' '
+            eol = '\r\n'
+        else:
+            spaces = '  '
+            eol = '\n'
+        assert_equal('---' + spaces + eol * 2 +
+                     '+++' + spaces + eol * 2 +
+                     '@@ -1,6 +1,5 @@' + eol * 2 +
+                     ' Line 1 {\\d+}' + eol +
+                     ' Line 2 {\\d{1,2}}' + eol +
+                     ' Line 3 {\\d{1}}' + eol +
+                     '-Line 4 {\\d{1}}' + eol +
+                     ' {.*}' + eol +
+                     ' <EOF>' + eol, stdout)
