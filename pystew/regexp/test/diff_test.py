@@ -32,7 +32,8 @@ import StringIO
 import os
 import sys
 import inspect
-cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0], "..", "..")))
+cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
+    inspect.getfile(inspect.currentframe()))[0], "..", "..")))
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
@@ -43,7 +44,16 @@ from nose.tools import assert_equal
 from nose.tools import assert_not_equal
 
 
-class ReStringTests(unittest.TestCase):
+class SpaceFinder(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super(SpaceFinder, self).__init__(*args, **kwargs)
+        import difflib
+        diff = difflib.unified_diff([""], [" "], lineterm='')
+        self._spaces = diff.next()[3:]
+
+
+class ReStringTests(SpaceFinder):
+
     def test_1(self):
         re_string = pystew.regexp.ReString("Toto")
         assert_equal("Toto", str(re_string))
@@ -59,7 +69,8 @@ class ReStringTests(unittest.TestCase):
         re1 = pystew.regexp.ReString("This is a string with something.")
         re2 = pystew.regexp.ReString("This is a string with {\w+}.")
         re3 = pystew.regexp.ReString("This is a string with {\w+}.")
-        re4 = pystew.regexp.ReString("This is a string with something that does not match.")
+        re4 = pystew.regexp.ReString(
+            "This is a string with something that does not match.")
         assert_equal(re1, re2)
         assert_equal(re1, re3)
         assert_not_equal(re2, re4)
@@ -70,7 +81,7 @@ class ReStringTests(unittest.TestCase):
         assert_equal(re1, re2)
 
     def test_expandtabs(self):
-        strings = ["	tabs in here	", "No tabs here"]
+        strings = ["    tabs in here    ", "No tabs here"]
         for string in strings:
             restring = pystew.regexp.ReString(string)
             assert_equal(string.expandtabs(2), str(restring.expandtabs(2)))
@@ -98,24 +109,40 @@ class ReStringTests(unittest.TestCase):
             assert_equal(string.rstrip('x'), str(restring.rstrip('x')))
 
     def test_rstrip_2(self):
-        assert_equal("{.*}", str(pystew.regexp.ReString("{.*} ").rstrip()))
-        assert_equal("{.*} ", str(pystew.regexp.ReString("{.*} ").rstrip('x')))
-        assert_equal("}{{.*}", str(pystew.regexp.ReString("}{{.*}").rstrip('}')))
-        assert_equal("}{{.*}", str(pystew.regexp.ReString("}{{.*}}").rstrip('}')))
-        assert_equal("}{{.*}", str(pystew.regexp.ReString("}{{.*}}}}}}").rstrip('}')))
+        assert_equal(
+            "{.*}",
+            str(pystew.regexp.ReString("{.*} ").rstrip()))
+        assert_equal(
+            "{.*} ",
+            str(pystew.regexp.ReString("{.*} ").rstrip('x')))
+        assert_equal(
+            "}{{.*}",
+            str(pystew.regexp.ReString("}{{.*}").rstrip('}')))
+        assert_equal(
+            "}{{.*}",
+            str(pystew.regexp.ReString("}{{.*}}").rstrip('}')))
+        assert_equal(
+            "}{{.*}",
+            str(pystew.regexp.ReString("}{{.*}}}}}}").rstrip('}')))
 
     def test_replace(self):
         strings = ["lorem ipsum ", "lor em ipsum", "rem {.*} rem", "{toto\d+}r"]
         for string in strings:
             restring = pystew.regexp.ReString(string)
-            assert_equal(string.replace('rem', 'x'), str(restring.replace('rem', 'x')))
+            assert_equal(
+                string.replace('rem', 'x'),
+                str(restring.replace('rem', 'x')))
 
     def test_replace_2(self):
-        assert_equal("{.*}", str(pystew.regexp.ReString("{.*}").replace("{.*}", "-")))
-        assert_equal("-{.*}-", str(pystew.regexp.ReString(".*{.*}.*").replace(".*", "-")))
+        assert_equal(
+            "{.*}",
+            str(pystew.regexp.ReString("{.*}").replace("{.*}", "-")))
+        assert_equal(
+            "-{.*}-",
+            str(pystew.regexp.ReString(".*{.*}.*").replace(".*", "-")))
 
 
-class Tests(unittest.TestCase):
+class Tests(SpaceFinder):
     def test_1(self):
         import datetime
         now = datetime.datetime.now()
@@ -128,107 +155,89 @@ Let's add some text at the end."""
         print text
         print reference
         assert(pystew.regexp.equal(text, reference))
-        if ('win32' == sys.platform):
-            spaces = ' '
-        else:
-            spaces = '  '
         nearly = """This is a fake text.
 Today is 2012-12-15 15:42:43.60400 and this should not prevent a match.
 Let's add some text at the end.""".format(now=now)
         assert(not pystew.regexp.equal(nearly, reference))
         assert_equal(pystew.regexp.diff(nearly, reference), """\
----""" + spaces + """
-
-+++""" + spaces + """
-
+---""" + self._spaces + """
++++""" + self._spaces + """
 @@ -1,3 +1,3 @@
-
  This is a fake text.
 -Today is 2012-12-15 15:42:43.60400 and this should not prevent a match.
 +Today is {\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}} and this should not prevent a match.
- Let's add some text at the end.""")
+ Let's add some text at the end.
+""")
         reference2 = """This is a fake text.
 Added line !
 Today is {\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}} and this should not prevent a match.
 Let's add some text at the end."""
         print "diff with added line"
         assert_equal(pystew.regexp.diff(text, reference2), """\
----""" + spaces + """
-
-+++""" + spaces + """
-
+---""" + self._spaces + """
++++""" + self._spaces + """
 @@ -1,3 +1,4 @@
-
  This is a fake text.
 +Added line !
  Today is {now} and this should not prevent a match.
- Let's add some text at the end.""".format(now=now))
+ Let's add some text at the end.
+""".format(now=now))
         print "diff with added line the revenge"
         assert_equal(pystew.regexp.diff(reference2, text), """\
----""" + spaces + """
-
-+++""" + spaces + """
-
+---""" + self._spaces + """
++++""" + self._spaces + """
 @@ -1,4 +1,3 @@
-
  This is a fake text.
 -Added line !
  Today is {\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}} and this should not prevent a match.
- Let's add some text at the end.""")
+ Let's add some text at the end.
+""")
         text2 = """This is a fake text.
 This is a new line !
 Today is {now} and this should not prevent a match.
 Let's add some text at the end.""".format(now=now)
         print "diff with added line 2"
         assert_equal(pystew.regexp.diff(text2, reference), """\
----""" + spaces + """
-
-+++""" + spaces + """
-
+---""" + self._spaces + """
++++""" + self._spaces + """
 @@ -1,4 +1,3 @@
-
  This is a fake text.
 -This is a new line !
  Today is {now} and this should not prevent a match.
- Let's add some text at the end.""".format(now=now))
+ Let's add some text at the end.
+""".format(now=now))
         print "diff with added line the revenge 2"
         assert_equal(pystew.regexp.diff(reference, text2), """\
----""" + spaces + """
-
-+++""" + spaces + """
-
+---""" + self._spaces + """
++++""" + self._spaces + """
 @@ -1,3 +1,4 @@
-
  This is a fake text.
 +This is a new line !
  Today is {\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}} and this should not prevent a match.
- Let's add some text at the end.""")
+ Let's add some text at the end.
+""")
         print "diff with added line 3"
         assert_equal(pystew.regexp.diff(text2, reference2), """\
----""" + spaces + """
-
-+++""" + spaces + """
-
+---""" + self._spaces + """
++++""" + self._spaces + """
 @@ -1,4 +1,4 @@
-
  This is a fake text.
 -This is a new line !
 +Added line !
  Today is {now} and this should not prevent a match.
- Let's add some text at the end.""".format(now=now))
+ Let's add some text at the end.
+""".format(now=now))
         print "diff with added line the revenge 3"
         assert_equal(pystew.regexp.diff(reference2, text2), """\
----""" + spaces + """
-
-+++""" + spaces + """
-
+---""" + self._spaces + """
++++""" + self._spaces + """
 @@ -1,4 +1,4 @@
-
  This is a fake text.
 -Added line !
 +This is a new line !
  Today is {\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}} and this should not prevent a match.
- Let's add some text at the end.""")
+ Let's add some text at the end.
+""")
 
     def test_2(self):
         text = """Line 1.
@@ -260,11 +269,11 @@ Line 4."""
         assert(pystew.regexp.equal(text, text2))
         print "diff2"
         print pystew.regexp.diff2(text, text2)
-        display_text = "  " + text.replace("\n", "\n  ")
+        display_text = "  " + text.replace("\n", "\n  ") + '\n'
         assert_equal(display_text, pystew.regexp.diff2(text, text2))
 
 
-class TestMain(unittest.TestCase):
+class TestMain(SpaceFinder):
     def setUp(self):
         self._sys_argv = sys.argv
         self._sys_stderr = sys.stderr
@@ -315,7 +324,7 @@ No such file or directory: 'a'
         assert_equal("", sys.stderr.getvalue())
 
 
-class TestBin(unittest.TestCase):
+class TestBin(SpaceFinder):
     def test_equal(self):
         import subprocess
         test_dir = os.path.join(cmd_subfolder, 'regexp', 'test')
@@ -350,17 +359,13 @@ class TestBin(unittest.TestCase):
         print "----"
         print stderr
         if ('win32' == sys.platform):
-            spaces = ' '
             eol = '\r\n'
         else:
-            spaces = '  '
             eol = '\n'
-        assert_equal('---' + spaces + eol * 2 +
-                     '+++' + spaces + eol * 2 +
-                     '@@ -1,6 +1,5 @@' + eol * 2 +
-                     ' Line 1 {\\d+}' + eol +
+        assert_equal('---' + self._spaces + eol +
+                     '+++' + self._spaces + eol +
+                     '@@ -2,4 +2,3 @@' + eol +
                      ' Line 2 {\\d{1,2}}' + eol +
                      ' Line 3 {\\d{1}}' + eol +
-                     '-Line 4 {\\d{1}}' + eol +
-                     ' {.*}' + eol +
-                     ' <EOF>' + eol, stdout)
+                     ' Line 4 {\\d{1}}' + eol +
+                     '-{.*}' + eol * 2, stdout)

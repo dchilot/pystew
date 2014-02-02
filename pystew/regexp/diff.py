@@ -31,7 +31,7 @@ DEBUG = False
 
 
 class ReString(object):
-    re_finder = re.compile("\{(([^{}]+(\{[^}]+\})?)+)\}")
+    re_finder = re.compile(r"""(^|[^\\])\{(([^{}]+(\{[^}]+\})?)+)\}""")
 
     def __init__(self, string):
         self._string = string
@@ -40,19 +40,33 @@ class ReString(object):
         last_index = 0
         for matcher in ReString.re_finder.finditer(string):
             self._has_re = True
+            offseted_string = \
+                    string[last_index:matcher.start()] + matcher.group(1)
             if (DEBUG):  # pragma: no cover
-                print "'" + string[last_index:matcher.start()] + "'"
-                print "'" + string[matcher.start():matcher.end()] + "'"
-            if (matcher.start() > 0):
-                self._build.append(string[last_index:matcher.start()])
-            regex = "(" + matcher.group(1) + ").*"
+                print "'" + offseted_string + "'"
+                print "'" + string[matcher.start() + len(matcher.group(1)):matcher.end()] + "'"
+            if (len(offseted_string) > 0):
+                self._build.append(offseted_string)
+            if ('*' == matcher.group(2)):
+                next_index = matcher.end()
+                if (next_index < len(string)):
+                    next_char = string[next_index]
+                    pattern = '[^{next_char}]*'.format(next_char=next_char)
+                else:
+                    pattern = '.*'
+            else:
+                pattern = matcher.group(2)
+            regex = "(" + pattern + ").*"
+            regex = regex.replace("(local)", "")
             if (DEBUG):  # pragma: no cover
                 print "build regex: " + regex
-            self._build.append(re.compile(regex))
+            user_regex = re.compile(regex)
+            self._build.append(user_regex)
             last_index = matcher.end()
             if (DEBUG):  # pragma: no cover
                 print "matcher.start()", matcher.start()
-                print "matcher.group(1)", matcher.group(1)
+                print "matcher.group(2)", matcher.group(2)
+                print 'user_regex.pattern =', user_regex.pattern
         if ((self._has_re) and (last_index < len(string))):
             self._build.append(string[last_index:])
         if (DEBUG):  # pragma: no cover
@@ -173,6 +187,7 @@ class ReString(object):
                 if (DEBUG):  # pragma: no cover
                     print "regex comparison"
                     print regex_string
+                    print regex_string.pattern
                     print "'" + real_string[last_index:] + "'"
                 found = regex_string.match(real_string[last_index:])
                 if (found is not None):
@@ -193,35 +208,65 @@ class ReString(object):
         return (new_index == len(real_string))
 
 
-def diff(text, reference):
-    re_text = map(ReString, text.split('\n'))
-    re_reference = map(ReString, reference.split('\n'))
-    #print re_text
-    #print re_reference
-    #print "\n//START DIFF\\\\\n"
-    difference = difflib.unified_diff(re_text, re_reference)
-    #difference = difflib.ndiff(re_text, re_reference)
-    return '\n'.join(list(difference))
+def raw_diff(text, reference, lines_of_context=3):
+    re_text = map(lambda x: ReString(x + '\n'), text.split('\n'))
+    re_reference = map(lambda x: ReString(x + '\n'), reference.split('\n'))
+    difference = difflib.unified_diff(re_text, re_reference,
+                                      n=lines_of_context)
+    return difference
 
 
-def diff2(text, reference):
-    re_text = map(ReString, text.split('\n'))
-    re_reference = map(ReString, reference.split('\n'))
+def diff(text, reference, lines_of_context=3):
+    return ''.join(list(raw_diff(text, reference, lines_of_context)))
+
+
+def raw_diff2(text, reference):
+    re_text = map(lambda x: ReString(x + '\n'), text.split('\n'))
+    re_reference = map(lambda x: ReString(x + '\n'), reference.split('\n'))
     #print re_text
     #print re_reference
     #difference = difflib.unified_diff(re_text, re_reference)
     difference = difflib.ndiff(re_text, re_reference)
-    return '\n'.join(list(difference))
+    return ''.join(list(difference))
 
 
-def diff3(text, reference):
-    re_text = map(ReString, text.split('\n'))
-    re_reference = map(ReString, reference.split('\n'))
+def diff2(text, reference):
+    return ''.join(list(raw_diff2(text, reference)))
+
+
+
+def raw_diff3(text, reference, lines_of_context=5):
+    re_text = map(lambda x: ReString(x + '\n'), text.split('\n'))
+    re_reference = map(lambda x: ReString(x + '\n'), reference.split('\n'))
     #print re_text
     #print re_reference
     #difference = difflib.unified_diff(re_text, re_reference)
-    difference = difflib.HtmlDiff().make_file(re_text, re_reference)
+    difference = difflib.HtmlDiff().make_file(re_text, re_reference,
+                                             numlines=lines_of_context)
     return difference
+
+
+def diff3(text, reference, lines_of_context=3):
+    return ''.join(list(raw_diff3(text, reference, lines_of_context)))
+
+
+
+def raw_diff4(text, reference, lines_of_context=3):
+    re_text = map(lambda x: ReString(x + '\n'), text.split('\n'))
+    re_reference = map(lambda x: ReString(x + '\n'), reference.split('\n'))
+    #print re_text
+    #print re_reference
+    #print "\n//START DIFF\\\\\n"
+    difference = difflib.context_diff(re_text, re_reference,
+                                      n=lines_of_context)
+    #difference = difflib.ndiff(re_text, re_reference)
+    #return ''.join(list(difference))
+    return difference
+
+
+def diff4(text, reference, lines_of_context=3):
+    return ''.join(list(raw_diff4(text, reference, lines_of_context)))
+
 
 
 def equal(text, reference):
@@ -238,10 +283,8 @@ def main():
                                    'between two files, one of which can '
                                    'contain emeded regular expressions '
                                    'between angle brackets (python re), '
-                                   'like "Today is {\w+}.". Warning: an extra '
-                                   'line containing "<EOF>" is added to have '
-                                   'better matches (but the principle is not '
-                                   'nice).')
+                                   'like "Today is {\w+}.".')
+    parser.add_option('--diff-mode', default="1")
     (options, arguments) = parser.parse_args()
 
     def is_file_missing(file_name):
@@ -249,7 +292,7 @@ def main():
             sys.stderr.write("No such file or directory: '" + file_name + "'\n")
             return True
         return False
-    if (len(sys.argv) == 3):
+    if (len(arguments) == 2):
         quit = is_file_missing(arguments[0])
         quit |= is_file_missing(arguments[1])
         if (quit):
@@ -259,7 +302,14 @@ def main():
                 # The extra line added alows to have a match at the end to
                 # make the algorithm compute extra differences (and a better
                 # match in the end).
-                print diff(file1.read() + "\n<EOF>", file2.read() + "\n<EOF>")
+                if ("2" == options.diff_mode):
+                    print ''.join(list(diff2(file1.read(), file2.read())))
+                elif ("3" == options.diff_mode):
+                    print ''.join(list(diff3(file1.read(), file2.read())))
+                elif ("4" == options.diff_mode):
+                    print ''.join(list(diff4(file1.read(), file2.read())))
+                else:
+                    print diff(file1.read(), file2.read())
     else:
         sys.stderr.write("Sorry the program does not understand the "
                          "parameters.\nThe expected syntax is :\n" +
