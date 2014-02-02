@@ -24,14 +24,16 @@
 #$Author::            $: Author of last commit
 #$Date::              $: Date of last commit
 
-# make sure the local version is used instead of the one in the python lib folder
-# http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
+#make sure the local version is used instead of the one in the python lib
+#folder
+#http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 import os
 import sys
 import inspect
-cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0], "..", "..")))
-if cmd_subfolder not in sys.path:
-    sys.path.insert(0, cmd_subfolder)
+CMD_SUBFOLDER = os.path.realpath(os.path.abspath(os.path.join(
+    os.path.split(inspect.getfile(inspect.currentframe()))[0], "..", "..")))
+if CMD_SUBFOLDER not in sys.path:
+    sys.path.insert(0, CMD_SUBFOLDER)
 
 import unittest
 #from pystew import xameli
@@ -61,9 +63,12 @@ class CoordinatesTests(unittest.TestCase):
         assert_equal(pystew.xameli.Coordinates(1, 2), coordinates.add(" "))
 
     def test_3(self):
-        assert(pystew.xameli.Coordinates(4, 6) <= pystew.xameli.Coordinates(4, 6))
-        assert(pystew.xameli.Coordinates(3, 6) <= pystew.xameli.Coordinates(4, 6))
-        assert(pystew.xameli.Coordinates(4, 6) <= pystew.xameli.Coordinates(4, 7))
+        assert(
+            pystew.xameli.Coordinates(4, 6) <= pystew.xameli.Coordinates(4, 6))
+        assert(
+            pystew.xameli.Coordinates(3, 6) <= pystew.xameli.Coordinates(4, 6))
+        assert(
+            pystew.xameli.Coordinates(4, 6) <= pystew.xameli.Coordinates(4, 7))
 
 
 class RangeTests(unittest.TestCase):
@@ -144,7 +149,9 @@ class RangeTests(unittest.TestCase):
         r.begin = pystew.xameli.Coordinates(10, 1)
 
     def test_9(self):
-        r = pystew.xameli.Range(pystew.xameli.Coordinates(1, 2), pystew.xameli.Coordinates(4, 5))
+        r = pystew.xameli.Range(
+            pystew.xameli.Coordinates(1, 2),
+            pystew.xameli.Coordinates(4, 5))
         assert(not r.contains(pystew.xameli.Coordinates(10, 1)))
         assert(not r.contains(pystew.xameli.Coordinates(1, 1)))
         assert(not r.contains(pystew.xameli.Coordinates(4, 6)))
@@ -159,10 +166,14 @@ class RangeTests(unittest.TestCase):
         assert(r.contains(pystew.xameli.Coordinates(2, -22)))
 
     def test_10(self):
-        r1 = pystew.xameli.Range(pystew.xameli.Coordinates(1, 2), pystew.xameli.Coordinates(4, 5))
+        r1 = pystew.xameli.Range(
+            pystew.xameli.Coordinates(1, 2),
+            pystew.xameli.Coordinates(4, 5))
         assert(r1.next is None)
         assert(r1.previous is None)
-        r2 = pystew.xameli.Range(pystew.xameli.Coordinates(4, 6), pystew.xameli.Coordinates(11, 2))
+        r2 = pystew.xameli.Range(
+            pystew.xameli.Coordinates(4, 6),
+            pystew.xameli.Coordinates(11, 2))
         assert(r2.next is None)
         assert(r2.previous is None)
         r1.try_to_link(r2)
@@ -170,7 +181,9 @@ class RangeTests(unittest.TestCase):
         assert(r2.next is None)
         assert(r1.previous is None)
         assert(r2.previous is None)
-        r3 = pystew.xameli.Range(pystew.xameli.Coordinates(4, 5), pystew.xameli.Coordinates(11, 2))
+        r3 = pystew.xameli.Range(
+            pystew.xameli.Coordinates(4, 5),
+            pystew.xameli.Coordinates(11, 2))
         assert(r3.next is None)
         assert(r3.previous is None)
         r1.try_to_link(r3)
@@ -178,7 +191,9 @@ class RangeTests(unittest.TestCase):
         assert_equal(r3.previous, r1)
         assert(r1.previous is None)
         assert(r3.next is None)
-        assert_equal("(xpath = None ; b = (l = 1 ; c = 2) ; e = (l = 4 ; c = 5))", str(r1))
+        assert_equal(
+            "(xpath = None ; b = (l = 1 ; c = 2) ; e = (l = 4 ; c = 5))",
+            str(r1))
 
 
 class XPathTests(unittest.TestCase):
@@ -295,7 +310,9 @@ class XPathTests(unittest.TestCase):
         assert(not root.contains_coordinates(pystew.xameli.Coordinates(42, 2)))
 
     def test_14(self):
-        root = pystew.xameli.XPath("root", begin_coordinates=pystew.xameli.Coordinates(1, 1))
+        root = pystew.xameli.XPath(
+            "root",
+            begin_coordinates=pystew.xameli.Coordinates(1, 1))
         assert(not root.closed)
         root.add_end(pystew.xameli.Coordinates(1, 4))
         assert(root.closed)
@@ -310,7 +327,9 @@ class XPathTests(unittest.TestCase):
         #2  3<sub>4
         #5      6<sub_sub>
         #
-        root = pystew.xameli.XPath("root", begin_coordinates=pystew.xameli.Coordinates(1, 1))
+        root = pystew.xameli.XPath(
+            "root",
+            begin_coordinates=pystew.xameli.Coordinates(1, 1))
         f1 = pystew.xameli.Coordinates(1, 7)
         f2 = pystew.xameli.Coordinates(2, 1)
         f3 = pystew.xameli.Coordinates(2, 4)
@@ -324,7 +343,9 @@ class XPathTests(unittest.TestCase):
         root.add_end(f3)
         sub = pystew.xameli.XPath("sub", root, begin_coordinates=f3)
         root.try_to_link(sub)
-        assert_equal(root.get_next_from(pystew.xameli.Coordinates(1, 1)).xpath, sub)
+        assert_equal(
+            root.get_next_from(pystew.xameli.Coordinates(1, 1)).xpath,
+            sub)
         assert(root.get_previous_from(pystew.xameli.Coordinates(1, 1)) is None)
         assert_equal(
             sub.get_previous_from(pystew.xameli.Coordinates(2, 6)).xpath, root)
@@ -397,9 +418,9 @@ class XameliTests(unittest.TestCase):
 
     def test_3(self):
         doc = "<xml/>"
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(doc, x)
-        xpath = str(x.get_xpath(1, 1))
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(doc, mapper)
+        xpath = str(mapper.get_xpath(1, 1))
         print "xpath = " + xpath
         assert_equal("/xml", xpath)
 
@@ -408,11 +429,11 @@ class XameliTests(unittest.TestCase):
         #    1          0123456789
         #    2                    012345678
         doc = "<a><b><c>content</c></b></a>"
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(doc, x)
-        self.helper(1, [(1, 3), (25, 30)], x, "/a")
-        self.helper(1, [(4, 6), (21, 24)], x, "/a/b")
-        self.helper(1, [(7, 20)], x, "/a/b/c")
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(doc, mapper)
+        self.helper(1, [(1, 3), (25, 30)], mapper, "/a")
+        self.helper(1, [(4, 6), (21, 24)], mapper, "/a/b")
+        self.helper(1, [(7, 20)], mapper, "/a/b/c")
 
     def helper(self, line, columns, mapper, expected):
         for column_range in columns:
@@ -426,40 +447,40 @@ class XameliTests(unittest.TestCase):
                 assert_equal(found, expected)
 
     def test_5(self):
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(self._doc, x)
-        self.helper(1, [(1, 52)], x, "/system-page")
-        self.helper(2, [(1, 4)], x, "/system-page")
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(self._doc, mapper)
+        self.helper(1, [(1, 52)], mapper, "/system-page")
+        self.helper(2, [(1, 4)], mapper, "/system-page")
 
-        self.helper(2, [(5, 22)], x, "/system-page/name")
-        self.helper(3, [(1, 4)], x, "/system-page")
+        self.helper(2, [(5, 22)], mapper, "/system-page/name")
+        self.helper(3, [(1, 4)], mapper, "/system-page")
 
-        self.helper(13, [(5, 43)], x, "/system-page/created-on")
+        self.helper(13, [(5, 43)], mapper, "/system-page/created-on")
 
-        self.helper(16, [(5, 17)], x, "/system-page/page-xhtml")
-        self.helper(17, [(1, 8)], x, "/system-page/page-xhtml")
+        self.helper(16, [(5, 17)], mapper, "/system-page/page-xhtml")
+        self.helper(17, [(1, 8)], mapper, "/system-page/page-xhtml")
 
-        self.helper(17, [(9, 74)], x, "/system-page/page-xhtml/p[1]")
-        self.helper(18, [(1, 8)], x, "/system-page/page-xhtml")
-        self.helper(18, [(9, 74)], x, "/system-page/page-xhtml/p[2]")
-        self.helper(19, [(1, 8)], x, "/system-page/page-xhtml")
-        self.helper(19, [(9, 74)], x, "/system-page/page-xhtml/p[3]")
-        self.helper(20, [(1, 4)], x, "/system-page/page-xhtml")
+        self.helper(17, [(9, 74)], mapper, "/system-page/page-xhtml/p[1]")
+        self.helper(18, [(1, 8)], mapper, "/system-page/page-xhtml")
+        self.helper(18, [(9, 74)], mapper, "/system-page/page-xhtml/p[2]")
+        self.helper(19, [(1, 8)], mapper, "/system-page/page-xhtml")
+        self.helper(19, [(9, 74)], mapper, "/system-page/page-xhtml/p[3]")
+        self.helper(20, [(1, 4)], mapper, "/system-page/page-xhtml")
 
-        self.helper(20, [(5, 18)], x, "/system-page/page-xhtml")
+        self.helper(20, [(5, 18)], mapper, "/system-page/page-xhtml")
 
-        self.helper(21, [(1, 99)], x, "/system-page")
+        self.helper(21, [(1, 99)], mapper, "/system-page")
 
     def test_6(self):
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(self._doc, x)
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(self._doc, mapper)
         f = StringIO.StringIO(self._doc)
         tree = lxml.etree.parse(f)
         for line, xml_line in enumerate(self._doc.split("\n")):
             line += 1
             column = xml_line.find('<') + 1
             while (column > 0):
-                xpath = str(x.get_xpath(line, column))
+                xpath = str(mapper.get_xpath(line, column))
                 print line, column, xpath
                 elements = tree.xpath(xpath)
                 print len(elements)
@@ -478,61 +499,67 @@ class XameliTests(unittest.TestCase):
 
 #    things should not work this way
 #    def test_7(self):
-#        x = pystew.xameli.XPathMapper()
-#        xml.sax.parseString(self._doc, x)
-#        self.helper_reverse(1, [(1, 99)], x, "/system-page")
+#        mapper = pystew.xameli.XPathMapper()
+#        xml.sax.parseString(self._doc, mapper)
+#        self.helper_reverse(1, [(1, 99)], mapper, "/system-page")
 #
-#        self.helper_reverse(2, [(1, 99)], x, "/system-page/name")
+#        self.helper_reverse(2, [(1, 99)], mapper, "/system-page/name")
 #
-#        self.helper_reverse(13, [(1, 99)], x, "/system-page/created-on")
+#        self.helper_reverse(13, [(1, 99)], mapper, "/system-page/created-on")
 #
-#        self.helper_reverse(16, [(1, 99)], x, "/system-page/page-xhtml")
+#        self.helper_reverse(16, [(1, 99)], mapper, "/system-page/page-xhtml")
 #
-#        self.helper_reverse(17, [(1, 99)], x, "/system-page/page-xhtml/p[1]")
-#        self.helper_reverse(18, [(1, 99)], x, "/system-page/page-xhtml/p[2]")
-#        self.helper_reverse(19, [(1, 99)], x, "/system-page/page-xhtml/p[3]")
+#        self.helper_reverse(
+#            17, [(1, 99)], mapper, "/system-page/page-xhtml/p[1]")
+#        self.helper_reverse(
+#            18, [(1, 99)], mapper, "/system-page/page-xhtml/p[2]")
+#        self.helper_reverse(
+#            19, [(1, 99)], mapper, "/system-page/page-xhtml/p[3]")
 #
-#        self.helper_reverse(20, [(1, 99)], x, "/system-page/page-xhtml")
+#        self.helper_reverse(20, [(1, 99)], mapper, "/system-page/page-xhtml")
 #
-#        self.helper_reverse(21, [(1, 99)], x, "/system-page")
+#        self.helper_reverse(21, [(1, 99)], mapper, "/system-page")
 
     def test_8(self):
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(self._doc, x)
-        xpath = x.get_xpath(3, 2)
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(self._doc, mapper)
+        xpath = mapper.get_xpath(3, 2)
         system_page = pystew.xameli.XPath("system-page")
         name = pystew.xameli.XPath("name", system_page)
         is_published = pystew.xameli.XPath("is-published", system_page)
         assert_equal(xpath, system_page)
         assert_equal(
-            xpath.get_next_from(pystew.xameli.Coordinates(3, 2)).xpath, is_published)
+            xpath.get_next_from(pystew.xameli.Coordinates(3, 2)).xpath,
+            is_published)
         page_xhtml = pystew.xameli.XPath("page-xhtml", system_page)
         p3 = pystew.xameli.XPath("p", page_xhtml)
         p3.count = 3
-        xpath_2 = x.get_xpath(19, 50)
+        xpath_2 = mapper.get_xpath(19, 50)
         assert_equal(xpath_2, p3)
         assert_equal(xpath_2.get_previous_from(
             pystew.xameli.Coordinates(19, 50)).xpath, page_xhtml)
-        xpath_3 = x.get_xpath(20, 10)
+        xpath_3 = mapper.get_xpath(20, 10)
         assert_equal(xpath_3, page_xhtml)
         assert_equal(xpath_3.get_previous_from(
             pystew.xameli.Coordinates(20, 1)).xpath, p3)
-        assert_equal(xpath.get_previous_from(pystew.xameli.Coordinates(3, 2)).xpath, name)
+        assert_equal(
+            xpath.get_previous_from(pystew.xameli.Coordinates(3, 2)).xpath,
+            name)
 
     def test_9(self):
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(self._doc, x)
-        xpath = x.get_xpath(0, 0)
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(self._doc, mapper)
+        xpath = mapper.get_xpath(0, 0)
         assert_equal(None, xpath)
 
     def test_reverse(self):
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(self._doc, x)
-        coordinates = x.get_coordinates('/system-page/page-xhtml/p[1]')
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(self._doc, mapper)
+        coordinates = mapper.get_coordinates('/system-page/page-xhtml/p[1]')
         assert_equal(2, len(coordinates))
-        coordinates = x.get_coordinates('/system-page/page-xhtml/p[3]')
+        coordinates = mapper.get_coordinates('/system-page/page-xhtml/p[3]')
         assert_equal(2, len(coordinates))
-        coordinates = x.get_coordinates('/system-page/page-xhtml/p[2]')
+        coordinates = mapper.get_coordinates('/system-page/page-xhtml/p[2]')
         expected_coordinates = [
             pystew.xameli.Coordinates(18, 9),
             pystew.xameli.Coordinates(18, 70),
@@ -541,9 +568,9 @@ class XameliTests(unittest.TestCase):
         assert_equal(expected_coordinates, coordinates)
 
     def test_reverse_2(self):
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(self._doc, x)
-        coordinates = x.get_coordinates('/system-page')
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(self._doc, mapper)
+        coordinates = mapper.get_coordinates('/system-page')
         expected_coordinates = [
             pystew.xameli.Coordinates(1, 1),
             pystew.xameli.Coordinates(21, 1),
@@ -552,21 +579,21 @@ class XameliTests(unittest.TestCase):
         assert_equal(expected_coordinates, coordinates)
 
     def test_reverse_3(self):
-        x = pystew.xameli.XPathMapper()
+        mapper = pystew.xameli.XPathMapper()
         #           0 123456789
         #           1          0123456789
         #           2                    0123456789
         #           3                              012
         with_empty = "<x><t><e/></t><t><e></e></t></x>"
-        xml.sax.parseString(with_empty, x)
-        found = x.get_xpath(1, 11)
+        xml.sax.parseString(with_empty, mapper)
+        found = mapper.get_xpath(1, 11)
         assert_equal('/x/t[1]', str(found))
-        print x._xpaths
-        for xpath, value in x._xpaths.items():
-            print "---"
-            print str(xpath)
-            print str(value)
-        coordinates = x.get_coordinates('/x/t[1]/e')
+        #print mapper._xpaths
+        #for xpath, value in mapper._xpaths.items():
+            #print "---"
+            #print str(xpath)
+            #print str(value)
+        coordinates = mapper.get_coordinates('/x/t[1]/e')
         for coords in coordinates:
             print coords
         expected_coordinates = [
@@ -574,7 +601,7 @@ class XameliTests(unittest.TestCase):
         ]
         assert_equal(len(expected_coordinates), len(coordinates))
         assert_equal(expected_coordinates, coordinates)
-        coordinates = x.get_coordinates('/x/t[2]/e')
+        coordinates = mapper.get_coordinates('/x/t[2]/e')
         expected_coordinates = [
             pystew.xameli.Coordinates(1, 18),
             pystew.xameli.Coordinates(1, 21),
@@ -583,9 +610,9 @@ class XameliTests(unittest.TestCase):
         assert_equal(expected_coordinates, coordinates)
 
     def test_reverse_4(self):
-        x = pystew.xameli.XPathMapper()
-        xml.sax.parseString(self._doc, x)
-        coordinates = x.get_coordinates('/nfh')
+        mapper = pystew.xameli.XPathMapper()
+        xml.sax.parseString(self._doc, mapper)
+        coordinates = mapper.get_coordinates('/nfh')
         assert_equal([], coordinates)
 
 
