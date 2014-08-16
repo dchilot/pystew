@@ -1,1 +1,1 @@
-from xameli import *
+"""Ugly way to simplify imports for clients."""from pystew.xameli.xameli import *

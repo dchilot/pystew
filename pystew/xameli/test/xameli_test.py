@@ -1,42 +1,6 @@
-#Copyright (c) 2012 'pystew developpers'
-#
-#This software is provided 'as-is', without any express or implied
-#warranty. In no event will the authors be held liable for any damages
-#arising from the use of this software.
-#
-#Permission is granted to anyone to use this software for any purpose,
-#including commercial applications, and to alter it and redistribute it
-#freely, subject to the following restrictions:
-#
-#    1. The origin of this software must not be misrepresented; you must not
-#    claim that you wrote the original software. If you use this software
-#    in a product, an acknowledgment in the product documentation would be
-#    appreciated but is not required.
-#
-#    2. Altered source versions must be plainly marked as such, and must not be
-#    misrepresented as being the original software.
-#
-#    3. This notice may not be removed or altered from any source
-#    distribution.
-
-#
-#$Rev::               $: Revision of last commit
-#$Author::            $: Author of last commit
-#$Date::              $: Date of last commit
-
-#make sure the local version is used instead of the one in the python lib
-#folder
-#http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
-import os
-import sys
-import inspect
-CMD_SUBFOLDER = os.path.realpath(os.path.abspath(os.path.join(
-    os.path.split(inspect.getfile(inspect.currentframe()))[0], "..", "..")))
-if CMD_SUBFOLDER not in sys.path:
-    sys.path.insert(0, CMD_SUBFOLDER)
+"""Tests for xameli module."""
 
 import unittest
-#from pystew import xameli
 import pystew.xameli
 import xml.sax
 import StringIO
@@ -48,7 +12,11 @@ from nose.tools import assert_not_equal
 
 
 class CoordinatesTests(unittest.TestCase):
+
+    """Tests for :class:`Coordinates`."""
+
     def test_1(self):
+        """Comparison and order."""
         coordinates = pystew.xameli.Coordinates(1, 2)
         assert_equal(1, coordinates.line)
         assert_equal(2, coordinates.column)
@@ -59,10 +27,12 @@ class CoordinatesTests(unittest.TestCase):
         assert(other_coordinates > coordinates)
 
     def test_2(self):
+        """Addition."""
         coordinates = pystew.xameli.Coordinates(1, 1)
         assert_equal(pystew.xameli.Coordinates(1, 2), coordinates.add(" "))
 
     def test_3(self):
+        """More order."""
         assert(
             pystew.xameli.Coordinates(4, 6) <= pystew.xameli.Coordinates(4, 6))
         assert(
@@ -72,7 +42,11 @@ class CoordinatesTests(unittest.TestCase):
 
 
 class RangeTests(unittest.TestCase):
+
+    """Tests for :class:`Range`."""
+
     def test_1(self):
+        """Constructor and comparison."""
         r = pystew.xameli.Range()
         assert(r.begin is None)
         assert(r.end is None)
@@ -84,6 +58,7 @@ class RangeTests(unittest.TestCase):
         assert_equal(end, r.end)
 
     def test_2(self):
+        """Constructor and comparison."""
         c1 = pystew.xameli.Coordinates(1, 1)
         r = pystew.xameli.Range(c1)
         assert_equal(c1, r.begin)
@@ -96,6 +71,7 @@ class RangeTests(unittest.TestCase):
         assert_equal(end, r.end)
 
     def test_3(self):
+        """Constructor and comparison."""
         c1 = pystew.xameli.Coordinates(1, 1)
         r = pystew.xameli.Range(begin=c1)
         assert_equal(c1, r.begin)
@@ -108,6 +84,7 @@ class RangeTests(unittest.TestCase):
         assert_equal(end, r.end)
 
     def test_4(self):
+        """Constructor and comparison."""
         c1 = pystew.xameli.Coordinates(2, 1)
         r = pystew.xameli.Range(end=c1)
         assert_equal(c1, r.end)
@@ -120,6 +97,7 @@ class RangeTests(unittest.TestCase):
         assert_equal(end, r.end)
 
     def test_5(self):
+        """Constructor and comparison."""
         c1 = pystew.xameli.Coordinates(1, 1)
         c2 = pystew.xameli.Coordinates(1, 4)
         r = pystew.xameli.Range(end=c2, begin=c1)
@@ -134,21 +112,25 @@ class RangeTests(unittest.TestCase):
 
     @raises(Exception)
     def test_6(self):
+        """Invalid range (end before begin)."""
         c1 = pystew.xameli.Coordinates(1, 1)
         c2 = pystew.xameli.Coordinates(1, 2)
         pystew.xameli.Range(begin=c2, end=c1)
 
     @raises(Exception)
     def test_7(self):
+        """There is no end."""
         r = pystew.xameli.Range(pystew.xameli.Coordinates(1, 2))
         r.end = pystew.xameli.Coordinates(1, 1)
 
     @raises(ValueError)
     def test_8(self):
+        """There is no begining."""
         r = pystew.xameli.Range(end=pystew.xameli.Coordinates(2, 2))
         r.begin = pystew.xameli.Coordinates(10, 1)
 
     def test_9(self):
+        """Test :method:`contains`."""
         r = pystew.xameli.Range(
             pystew.xameli.Coordinates(1, 2),
             pystew.xameli.Coordinates(4, 5))
@@ -166,6 +148,7 @@ class RangeTests(unittest.TestCase):
         assert(r.contains(pystew.xameli.Coordinates(2, -22)))
 
     def test_10(self):
+        """Test :method:`previous` and :method:`next`."""
         r1 = pystew.xameli.Range(
             pystew.xameli.Coordinates(1, 2),
             pystew.xameli.Coordinates(4, 5))
@@ -197,7 +180,11 @@ class RangeTests(unittest.TestCase):
 
 
 class XPathTests(unittest.TestCase):
+
+    """Tets for :class:`XPath`."""
+
     def test_1(self):
+        """Constructor, comparison and order."""
         tag = pystew.xameli.XPath("tag")
         assert_equal(str(tag), "/tag")
         assert_equal(tag.name, "tag")
@@ -206,6 +193,7 @@ class XPathTests(unittest.TestCase):
         assert(not (tag < tag))
 
     def test_2(self):
+        """Constructor, comparison and order."""
         tag_1 = pystew.xameli.XPath("tag")
         tag_2 = pystew.xameli.XPath("tag")
         assert_equal(tag_1, tag_2)
@@ -213,6 +201,7 @@ class XPathTests(unittest.TestCase):
         assert(not (tag_2 < tag_1))
 
     def test_3(self):
+        """Depth and string representation."""
         root = pystew.xameli.XPath("root")
         sub = pystew.xameli.XPath("sub", root)
         assert_equal(sub.depth, 2)
@@ -221,14 +210,17 @@ class XPathTests(unittest.TestCase):
 
     @raises(ValueError)
     def test_4(self):
+        """Invalid xpath for root element as empty."""
         pystew.xameli.XPath("")
 
     @raises(ValueError)
     def test_5(self):
+        """Invalid xpath for child element as empty."""
         root = pystew.xameli.XPath("root")
         pystew.xameli.XPath("", root)
 
     def test_6(self):
+        """Test methods :method:`multiple` and :method:`contains`."""
         root = pystew.xameli.XPath("root")
         sub1 = pystew.xameli.XPath("sub", root)
         assert(not sub1.multiple)
@@ -260,6 +252,7 @@ class XPathTests(unittest.TestCase):
 
     @raises(Exception)
     def test_7(self):
+        """One cannot add a range starting before previous one."""
         root = pystew.xameli.XPath("root")
         root.add_begin(pystew.xameli.Coordinates(2, 2))
         # begin < end
@@ -267,12 +260,14 @@ class XPathTests(unittest.TestCase):
 
     @raises(Exception)
     def test_8(self):
+        """The end cannot come before the begining."""
         root = pystew.xameli.XPath("root")
         # begin before end
         root.add_end(pystew.xameli.Coordinates(1, 2))
 
     @raises(Exception)
     def test_9(self):
+        """A range must be finished before starting a new one."""
         root = pystew.xameli.XPath("root")
         root.add_begin(pystew.xameli.Coordinates(2, 2))
         # begin before end before begin
@@ -280,12 +275,14 @@ class XPathTests(unittest.TestCase):
 
     @raises(Exception)
     def test_10(self):
+        """A range as only one end at most."""
         root = pystew.xameli.XPath("root")
         root.add_begin(pystew.xameli.Coordinates(2, 2))
         root.add_end(pystew.xameli.Coordinates(4, 1))
         root.add_end(pystew.xameli.Coordinates(5, 1))
 
     def test_11(self):
+        """Test :method:`contains_coordinates`."""
         c1 = pystew.xameli.Coordinates(4, 1)
         root = pystew.xameli.XPath("root", begin_coordinates=c1)
         assert(root.contains_coordinates(c1))
@@ -293,6 +290,7 @@ class XPathTests(unittest.TestCase):
         assert(root.contains_coordinates(pystew.xameli.Coordinates(4, 2)))
 
     def test_12(self):
+        """Test :method:`contains_coordinates`."""
         c1 = pystew.xameli.Coordinates(4, 1)
         c2 = pystew.xameli.Coordinates(4, 8)
         before_c2 = pystew.xameli.Coordinates(4, 7)
@@ -305,11 +303,13 @@ class XPathTests(unittest.TestCase):
         assert(root.contains_coordinates(pystew.xameli.Coordinates(4, 2)))
 
     def test_13(self):
+        """Test :method:`contains_coordinates`."""
         root = pystew.xameli.XPath("root")
         assert(not root.contains_coordinates(pystew.xameli.Coordinates(1, 1)))
         assert(not root.contains_coordinates(pystew.xameli.Coordinates(42, 2)))
 
     def test_14(self):
+        """Test :method:`contains_coordinates`."""
         root = pystew.xameli.XPath(
             "root",
             begin_coordinates=pystew.xameli.Coordinates(1, 1))
@@ -323,9 +323,10 @@ class XPathTests(unittest.TestCase):
         assert(not root.contains_coordinates(pystew.xameli.Coordinates(1, 4)))
 
     def test_15(self):
-        #<root>1
-        #2  3<sub>4
-        #5      6<sub_sub>
+        """Test :method:`get_next`."""
+        # <root>1
+        # 2  3<sub>4
+        # 5      6<sub_sub>
         #
         root = pystew.xameli.XPath(
             "root",
@@ -360,6 +361,7 @@ class XPathTests(unittest.TestCase):
         assert(root.get_next_from(pystew.xameli.Coordinates(0, 0)) is None)
 
     def test_16(self):
+        """Test order."""
         system_page = pystew.xameli.XPath("system-page")
         name = pystew.xameli.XPath("name", system_page)
         assert(system_page < name)
@@ -369,7 +371,11 @@ class XPathTests(unittest.TestCase):
 
 
 class XameliParse(unittest.TestCase):
+
+    """Very simple test for :class:`XPathMapper`."""
+
     def test_1(self):
+        """Test xpath computation."""
         # this is a bit ugly in order to use tabs without scaring pep8
         text = (
             '<root>\n'
@@ -385,8 +391,12 @@ class XameliParse(unittest.TestCase):
 
 
 class XameliTests(unittest.TestCase):
+
+    """More global tests for the module (:class:`XPathMapper`)."""
+
     @classmethod
     def setup_class(self):
+        """Create one big enough xml document to claim tests are valid."""
         self._doc = """\
 <system-page id="ef81d1c90a00016b00659a66bcacb166">
     <name>page</name>
@@ -411,12 +421,15 @@ class XameliTests(unittest.TestCase):
 </system-page>"""
 
     def test_1(self):
+        """Constructor."""
         pystew.xameli.XPathMapper()
 
     def test_2(self):
+        """Maybe a bit overkill."""
         assert(issubclass(pystew.xameli.XPathMapper, xml.sax.ContentHandler))
 
     def test_3(self):
+        """Only the root."""
         doc = "<xml/>"
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(doc, mapper)
@@ -425,6 +438,7 @@ class XameliTests(unittest.TestCase):
         assert_equal("/xml", xpath)
 
     def test_4(self):
+        """Small xml on one line."""
         #    0 123456789
         #    1          0123456789
         #    2                    012345678
@@ -436,6 +450,7 @@ class XameliTests(unittest.TestCase):
         self.helper(1, [(7, 20)], mapper, "/a/b/c")
 
     def helper(self, line, columns, mapper, expected):
+        """Assert that we find the expected xpath at the given coordinates."""
         for column_range in columns:
             for column in range(column_range[0], column_range[1]):
                 found = str(mapper.get_xpath(line, column))
@@ -447,6 +462,7 @@ class XameliTests(unittest.TestCase):
                 assert_equal(found, expected)
 
     def test_5(self):
+        """Check all elements present."""
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(self._doc, mapper)
         self.helper(1, [(1, 52)], mapper, "/system-page")
@@ -472,10 +488,15 @@ class XameliTests(unittest.TestCase):
         self.helper(21, [(1, 99)], mapper, "/system-page")
 
     def test_6(self):
+        """Reality check.
+
+        Each element only has one element. Test that the xpath computed
+        is valid using lxml.
+        """
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(self._doc, mapper)
-        f = StringIO.StringIO(self._doc)
-        tree = lxml.etree.parse(f)
+        xml_file = StringIO.StringIO(self._doc)
+        tree = lxml.etree.parse(xml_file)
         for line, xml_line in enumerate(self._doc.split("\n")):
             line += 1
             column = xml_line.find('<') + 1
@@ -521,6 +542,7 @@ class XameliTests(unittest.TestCase):
 #        self.helper_reverse(21, [(1, 99)], mapper, "/system-page")
 
     def test_8(self):
+        """Check we have the expected xpath a some interesting coordinates."""
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(self._doc, mapper)
         xpath = mapper.get_xpath(3, 2)
@@ -547,12 +569,17 @@ class XameliTests(unittest.TestCase):
             name)
 
     def test_9(self):
+        """Nothing found at invalid coordinates."""
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(self._doc, mapper)
         xpath = mapper.get_xpath(0, 0)
         assert_equal(None, xpath)
 
     def test_reverse(self):
+        """Check that xpaths have the expected coordinates.
+
+        This test is present because of the repetition.
+        """
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(self._doc, mapper)
         coordinates = mapper.get_coordinates('/system-page/page-xhtml/p[1]')
@@ -568,6 +595,10 @@ class XameliTests(unittest.TestCase):
         assert_equal(expected_coordinates, coordinates)
 
     def test_reverse_2(self):
+        """Check that xpaths have the expected coordinates.
+
+        This test is present because the root has children.
+        """
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(self._doc, mapper)
         coordinates = mapper.get_coordinates('/system-page')
@@ -579,6 +610,10 @@ class XameliTests(unittest.TestCase):
         assert_equal(expected_coordinates, coordinates)
 
     def test_reverse_3(self):
+        """Check that xpaths have the expected coordinates.
+
+        The xml is only on one line.
+        """
         mapper = pystew.xameli.XPathMapper()
         #           0 123456789
         #           1          0123456789
@@ -588,11 +623,6 @@ class XameliTests(unittest.TestCase):
         xml.sax.parseString(with_empty, mapper)
         found = mapper.get_xpath(1, 11)
         assert_equal('/x/t[1]', str(found))
-        #print mapper._xpaths
-        #for xpath, value in mapper._xpaths.items():
-            #print "---"
-            #print str(xpath)
-            #print str(value)
         coordinates = mapper.get_coordinates('/x/t[1]/e')
         for coords in coordinates:
             print coords
@@ -610,6 +640,7 @@ class XameliTests(unittest.TestCase):
         assert_equal(expected_coordinates, coordinates)
 
     def test_reverse_4(self):
+        """Not found here."""
         mapper = pystew.xameli.XPathMapper()
         xml.sax.parseString(self._doc, mapper)
         coordinates = mapper.get_coordinates('/nfh')
@@ -617,5 +648,9 @@ class XameliTests(unittest.TestCase):
 
 
 class XameliMain(unittest.TestCase):
+
+    """Test for :method:`fake_main`."""
+
     def test_main(self):
+        """Test :method:`fake_main`."""
         pystew.xameli.fake_main()
