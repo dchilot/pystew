@@ -233,7 +233,7 @@ def diff(text, reference, lines_of_context=3):
     :type text: :class:`str`
 
     :param reference: The text to compare to.
-    :type text: :class:`str`
+    :type reference: :class:`str`
 
     :return: Unified diff.
     :rtype: :class:`str`
@@ -251,7 +251,7 @@ def raw_diff2(text, reference):
     :type text: :class:`str`
 
     :param reference: The text to compare to.
-    :type text: :class:`str`
+    :type reference: :class:`str`
 
     :return: Numbered diff.
     :rtype: generator (:class:`str`)
@@ -274,7 +274,7 @@ def raw_diff3(text, reference, lines_of_context=5):
     :type text: :class:`str`
 
     :param reference: The text to compare to.
-    :type text: :class:`str`
+    :type reference: :class:`str`
 
     :return: HTML diff.
     :rtype: generator (:class:`str`)
@@ -293,7 +293,7 @@ def diff3(text, reference, lines_of_context=3):
     :type text: :class:`str`
 
     :param reference: The text to compare to.
-    :type text: :class:`str`
+    :type reference: :class:`str`
 
     :return: HTML diff.
     :rtype: :class:`str`
@@ -308,7 +308,7 @@ def raw_diff4(text, reference, lines_of_context=3):
     :type text: :class:`str`
 
     :param reference: The text to compare to.
-    :type text: :class:`str`
+    :type reference: :class:`str`
 
     :return: contextual diff.
     :rtype: generator (:class:`str`)
@@ -327,7 +327,7 @@ def diff4(text, reference, lines_of_context=3):
     :type text: :class:`str`
 
     :param reference: The text to compare to.
-    :type text: :class:`str`
+    :type reference: :class:`str`
 
     :return: contextual diff.
     :rtype: generator (:class:`str`)
