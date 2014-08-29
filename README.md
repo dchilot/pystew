@@ -1,21 +1,19 @@
-pystew
-======
+#pystew
+
+##Short description
 
 Python scripts that eventually work.
 
-Goal
-====
+##Goal
 
 Put together helpful python libraries, at first to learn more about python.
 
-Location
-========
+##Location
 
 Code is hosted on https://github.com/dchilot/pystew
 
 Old code is hosted on https://sourceforge.net/projects/pystew
 
-License
-=======
+##License
 
 The software is licensed under the terms of the zlib license.
