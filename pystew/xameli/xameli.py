@@ -248,12 +248,14 @@ class Coordinates(object):
         Add to the coordinates to simulate a cursor move.
 
         Compute the Coordinates the cursor would be after going through the
-        characters described by :param:`offset`. The only newline characters
+        characters described by ``offset``. The only newline characters
         recognized to jump to a new line is '\n'.
-        ..Warning::
-        This is only used in tests (candidate for removal).
 
         :param offset: lousy representation of a cursor move.
+
+        .. Warning::
+
+            This is only used in tests (candidate for removal).
         """
         splitted = offset.split("\n")
         line_offset = len(splitted) - 1
@@ -291,10 +293,11 @@ class Range(object):
     Range of coordinates to identify a chunk of text.
 
     Span between two coordinates (of type :class:`Coorinates`):
-        - begin (included)
-        - end (excluded)
+      - begin (included)
+      - end (excluded)
+
     It may contain a back pointer on the xpath that this range describes.
-    If :member:`previous` and :member:`next` are not None, they point to
+    If ``previous`` and ``next`` are not None, they point to
     the adjacent ranges in the file.
     """
 
@@ -306,7 +309,6 @@ class Range(object):
         :param end: excluded from the range.
         :type end: :class:`Coordinates`
         :param xpath:
-
         """
         self._begin = begin
         self._end = end
@@ -360,8 +362,8 @@ class Range(object):
         Merge ranges.
 
         Try to link then end of this range to the begining of then begining of
-        the :param:`other`. This will work if the ranges are adjacent and
-        :param:`self` before :param:`other` in the file.
+        the ``other``. This will work if the ranges are adjacent and
+        ``self`` before ``other`` in the file.
 
         :param other:
         :type other: :class:`Range`
@@ -389,9 +391,9 @@ class Range(object):
 
     def contains(self, coordinates):
         """
-        Test if :param:`coordinates` lies in the range.
+        Test if ``coordinates`` lies in the range.
 
-        Returns true if and only if #coorinates is in this range.
+        Returns true if and only if ``coorinates`` is in this range.
 
         :param coordinates: Coordinates to test.
         :type coordinates: :class:`Coordinates`
@@ -418,8 +420,8 @@ class XPath(object):
         """
         Constructor.
 
-        If the elment named :param:`name` is not the root, it should
-        have a :param:`parent`. If you work in a file, you should give
+        If the elment named ``name`` is not the root, it should
+        have a ``parent``. If you work in a file, you should give
         the first coordinates the element appears in the file
         ("param:`begin_coorinates`).
 
@@ -428,7 +430,7 @@ class XPath(object):
 
         :param parent:
             Parent xpath.
-            Must be provided if :param:`name` is not the root of the
+            Must be provided if ``name`` is not the root of the
             xml document.
         :type parent: :class:`XPath`
 
@@ -459,7 +461,7 @@ class XPath(object):
 
         In a file, ranges that are part of one single element are not all
         adjacent, so you may have to add the begining of an other portion
-        starting at :param:`coordinates`.
+        starting at ``coordinates``.
         """
         assert((len(self._coordinates) == 0) or
                ((self._coordinates[-1].begin is not None) and
@@ -471,7 +473,7 @@ class XPath(object):
         Tell where to find the end of a chunk of the element.
 
         You will have to tell when the begun ranges end by providing
-        #coordinates except for the root (so anything still in the file but
+        ``coordinates`` except for the root (so anything still in the file but
         outside of the xml root will still be marked as belonging to the root).
         """
         assert((len(self._coordinates) > 0) and
@@ -493,7 +495,7 @@ class XPath(object):
         Find an xpath after provided coordinates.
 
         Get the first range that does not belong to this xpath starting from
-        :param:`coordinates` (forward). It will return None if not found.
+        ``coordinates`` (forward). It will return None if not found.
 
         :param coordinates: Where to start looking.
         :type coordinates: :class:`Coordinates`
@@ -519,7 +521,7 @@ class XPath(object):
         Find an xpath before provided coordinates.
 
         Get the first range that does not belong to this xpath starting from
-        :param:`coordinates` (backward). It will return None if not found.
+        ``coordinates`` (backward). It will return None if not found.
 
         :param coordinates: Where to start looking.
         :type coordinates: :class:`Coordinates`
@@ -590,7 +592,7 @@ class XPath(object):
         Number of matching elements found.
 
         The number of elements matched by this xpath when not using any index
-        (#seealso :meth:`simple_str`).
+        (``seealso`` :meth:`simple_str`).
         """
         return self._count
 
@@ -600,7 +602,7 @@ class XPath(object):
         Setter.
 
         You should use this setter when you know this xpath would match more
-        than one element (#seealso :meth:`__str__`).
+        than one element (``seealso`` :meth:`__str__`).
         """
         self.multiple = (value > 1)
         self._count = value
@@ -646,10 +648,10 @@ class XPath(object):
 
     def contains(self, other):
         """
-        Check if :param:`self` contains :param:`other`.
+        Check if ``self`` contains ``other``.
 
-        Returns True if and only :param:`self` contains :param`other`, which
-        means :param:`other` is an ancestor of :param:`self` (or :param:`self`
+        Returns True if and only ``self`` contains :param`other`, which
+        means ``other`` is an ancestor of ``self`` (or ``self``
         itself), but checking by names if they have different depths.
 
         NB: when built properly this could be checked by
@@ -676,13 +678,13 @@ class XPath(object):
 
     def contains_coordinates(self, coordinates):
         """
-        Check if :param:`coordinates` is in an element matching this xpath.
+        Check if ``coordinates`` is in an element matching this xpath.
 
         :param coordinates: Coordinates to check.
         :type coordinates: :class:`Coordinates`
 
         :returns:
-            True if and only if :param:`coordinates` lies in a range
+            True if and only if ``coordinates`` lies in a range
             matched be this xpath.
         """
         for r in self._coordinates:
@@ -784,7 +786,7 @@ class XPathMapper(xml.sax.ContentHandler):
             self._last_xpath = xpath
 
     def endElement(self, name):
-        """Override :param:`xml.sax.ContentHandler.endElement`."""
+        """Override ``xml``.sax.ContentHandler.endElement."""
         coord = Coordinates(self._locator.getLineNumber(),
                             self._locator.getColumnNumber() + 1)
         if (coord in self.coordinates.keys()):
@@ -808,10 +810,10 @@ class XPathMapper(xml.sax.ContentHandler):
 
         This is the only interesting method in the whole file. Returns the
         xpath to get the element at the coordinates identified by
-        :param:`line` and :param:`column`. If you are outside the root
+        ``line`` and ``column``. If you are outside the root
         element, you will still get an xpath to the root element.
         You need the object to have built an inner representation either by
-        calling #parse or by giving this object has a handler to a sax
+        calling ``parse`` or by giving this object has a handler to a sax
         method doing the parsing.
 
         :param line: starts at 1.
@@ -830,7 +832,7 @@ class XPathMapper(xml.sax.ContentHandler):
 
         Shortcut so that users do not have to worry about finding the sax
         method to parse a string. This will build the inner representation
-        of :param:`text` so that you can call :meth:`get_xpath`.
+        of ``text`` so that you can call :meth:`get_xpath`.
 
         :param text: a string containing XML to parse.
         """
@@ -847,7 +849,7 @@ class XPathMapper(xml.sax.ContentHandler):
 
         :returns:
             the coordinates of the tags delimiting the element which
-            match :param:`xpath`, if this element is found. For a
+            match ``xpath``, if this element is found. For a
             self-closed element only one set of coordinates is returned,
             but if two tags are present then two sets of coorinates will
             be returned.
