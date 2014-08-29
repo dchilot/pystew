@@ -301,10 +301,10 @@ class Range(object):
     def __init__(self, begin=None, end=None, xpath=None):
         """Constructor.
 
-        :param begin:
-            included in the range. Must be of type :class:`Coordinates`.
-        :param end:
-            excluded from the range. Must be of type :class:`Coordinates`.
+        :param begin: included in the range.
+        :type begin: :class:`Coordinates`
+        :param end: excluded from the range.
+        :type end: :class:`Coordinates`
         :param xpath:
 
         """
@@ -364,7 +364,7 @@ class Range(object):
         :param:`self` before :param:`other` in the file.
 
         :param other:
-            Must be of type :class:`Range`.
+        :type other: :class:`Range`
         """
         linked = True
         if (self.end == other.begin):
@@ -393,8 +393,8 @@ class Range(object):
 
         Returns true if and only if #coorinates is in this range.
 
-        :param coordinates:
-            Coordinates to test. Must be of type :class:`Coordinates`.
+        :param coordinates: Coordinates to test.
+        :type coordinates: :class:`Coordinates`
         """
         return ((self._begin <= coordinates) and
                 ((self._end is None) or (coordinates < self._end)))
@@ -423,17 +423,17 @@ class XPath(object):
         the first coordinates the element appears in the file
         ("param:`begin_coorinates`).
 
-        :param name:
-            Name of the element we are building an xpath for.
-            Must be if type :class:`str`.
+        :param name: Name of the element we are building an xpath for.
+        :type name: :class:`str`
 
         :param parent:
-            Parent xpath. Must be of type :class:`XPath`.
+            Parent xpath.
             Must be provided if :param:`name` is not the root of the
             xml document.
+        :type parent: :class:`XPath`
 
-        :param begin_coordinates:
-            Where the element begins. Must be of type :class:`Coordinates`.
+        :param begin_coordinates: Where the element begins.
+        :type begin_coordinates: :class:`Coordinates`
         """
         self.name = name
         self._parent = parent
@@ -495,8 +495,8 @@ class XPath(object):
         Get the first range that does not belong to this xpath starting from
         :param:`coordinates` (forward). It will return None if not found.
 
-        :param coordinates:
-            Where to start looking. Must be of type :class:`Coordinates`.
+        :param coordinates: Where to start looking.
+        :type coordinates: :class:`Coordinates`
 
         :returns:
             :class:`Range` if found None otherwise.
@@ -521,8 +521,8 @@ class XPath(object):
         Get the first range that does not belong to this xpath starting from
         :param:`coordinates` (backward). It will return None if not found.
 
-        :param coordinates:
-            Where to start looking. Must be of type :class:`Coordinates`.
+        :param coordinates: Where to start looking.
+        :type coordinates: :class:`Coordinates`
 
         :returns:
             :class:`Range` if found None otherwise.
@@ -590,7 +590,7 @@ class XPath(object):
         Number of matching elements found.
 
         The number of elements matched by this xpath when not using any index
-        (#seealso :method:`simple_str`).
+        (#seealso :meth:`simple_str`).
         """
         return self._count
 
@@ -600,7 +600,7 @@ class XPath(object):
         Setter.
 
         You should use this setter when you know this xpath would match more
-        than one element (#seealso :method:`__str__`).
+        than one element (#seealso :meth:`__str__`).
         """
         self.multiple = (value > 1)
         self._count = value
@@ -655,8 +655,8 @@ class XPath(object):
         NB: when built properly this could be checked by
         looking at the ancestors (this might be tried one day).
 
-        :param other:
-            The xpath to check. Must be of type :class:`XPath`.
+        :param other: The xpath to check.
+        :type other: :class:`XPath`
         """
         if (self == other):
             return True
@@ -678,8 +678,8 @@ class XPath(object):
         """
         Check if :param:`coordinates` is in an element matching this xpath.
 
-        :param coordinates:
-            Coordinates to check. Must be of type :class:`Coordinates`.
+        :param coordinates: Coordinates to check.
+        :type coordinates: :class:`Coordinates`
 
         :returns:
             True if and only if :param:`coordinates` lies in a range
@@ -716,7 +716,7 @@ class XPathMapper(xml.sax.ContentHandler):
         self._conflicts = collections.defaultdict(list)
 
     def startDocument(self):
-        """Override :method:`xml.sax.ContentHandler.startDocument`."""
+        """Override :meth:`xml.sax.ContentHandler.startDocument`."""
         self.coordinates.clear()
         self._xpaths_counter.clear()
         self._xpaths.clear()
@@ -725,7 +725,7 @@ class XPathMapper(xml.sax.ContentHandler):
         self._conflicts.clear()
 
     def endDocument(self):
-        """Override :method:`xml.sax.ContentHandler.endDocument`."""
+        """Override :meth:`xml.sax.ContentHandler.endDocument`."""
         self._xpaths.clear()
         for coordinates in sorted(self.coordinates):
             xpath = self.coordinates[coordinates]
@@ -737,11 +737,11 @@ class XPathMapper(xml.sax.ContentHandler):
                 self._xpaths[xpath.simple_str].append(coordinates)
 
     def setDocumentLocator(self, locator):
-        """Override :method:`xml.sax.ContentHandler.setDocumentLocator`."""
+        """Override :meth:`xml.sax.ContentHandler.setDocumentLocator`."""
         self._locator = locator
 
     def startElement(self, name, attrs):
-        """Override :method:`xml.sax.ContentHandler.startElement`."""
+        """Override :meth:`xml.sax.ContentHandler.startElement`."""
         coord = Coordinates(self._locator.getLineNumber(),
                             self._locator.getColumnNumber() + 1)
         xpath = XPath(name, self._path[-1], coord)
@@ -771,7 +771,7 @@ class XPathMapper(xml.sax.ContentHandler):
         self._last_xpath = xpath
 
     def characters(self, content):
-        """Override :method:`xml.sax.ContentHandler.characters`."""
+        """Override :meth:`xml.sax.ContentHandler.characters`."""
         xpath = self._path[-1]
         if (xpath != self._last_xpath):
             coord = Coordinates(self._locator.getLineNumber(),
@@ -830,7 +830,7 @@ class XPathMapper(xml.sax.ContentHandler):
 
         Shortcut so that users do not have to worry about finding the sax
         method to parse a string. This will build the inner representation
-        of :param:`text` so that you can call :method:`get_xpath`.
+        of :param:`text` so that you can call :meth:`get_xpath`.
 
         :param text: a string containing XML to parse.
         """
@@ -842,7 +842,8 @@ class XPathMapper(xml.sax.ContentHandler):
 
         :param xpath:
             this has to be an absolute xpath expression and match an
-            element to be considered valid. Must be of type :class:`str`.
+            element to be considered valid.
+        :type xpath: :class:`str`
 
         :returns:
             the coordinates of the tags delimiting the element which
